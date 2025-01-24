@@ -28,7 +28,7 @@ export default function Email() {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="   border border-white/10"
+      className="  "
     >
       <div className="flex items-center mb-4">
         <Mail className="w-6 h-6 mr-2" />

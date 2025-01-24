@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Settings, Image, GripHorizontal, X, Volume2 } from "lucide-react";
+import { Plus, Settings, Image, GripHorizontal, X, Volume2, Maximize2 } from "lucide-react";
 import { motion, Reorder, useDragControls, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useState, useEffect } from "react";
 import Clock from "@/components/widgets/Clock";
@@ -124,7 +124,7 @@ const SOUNDS: Sound[] = [
   { id: 'jungle', name: 'Jungle', file: '/sounds/jungle.mp3' },
 ];
 
-// Improved layout generation
+// Restore the original layout generation
 const generateLayout = (widgets: Widget[]): Layout[] => {
   const maxCols = 16;
   let x = 0;
@@ -177,22 +177,22 @@ export default function Home() {
   const springConfig = { damping: 100, stiffness: 50, mass: 3 };
   
   const moveX = useSpring(
-    useTransform(time, [0, 100], [-10, 10]), 
+    useTransform(time, [0, 100], [-11, 11]), // Slightly increased from -10, 10
     springConfig
   );
   
   const moveY = useSpring(
-    useTransform(time, [0, 100], [-5, 5]), 
+    useTransform(time, [0, 100], [-5.5, 5.5]), // Slightly increased from -5, 5
     springConfig
   );
   
   const rotateX = useSpring(
-    useTransform(time, [0, 100], [-1, 1]), 
+    useTransform(time, [0, 100], [-1.1, 1.1]), // Slightly increased from -1, 1
     springConfig
   );
   
   const rotateY = useSpring(
-    useTransform(time, [0, 100], [-1, 1]), 
+    useTransform(time, [0, 100], [-1.1, 1.1]), // Slightly increased from -1, 1
     springConfig
   );
 
@@ -246,6 +246,7 @@ export default function Home() {
     setShowAddMenu(false);
   };
 
+  // Restore original widget size cycling
   const cycleWidgetSize = (widget: Widget) => {
     const currentSizeIndex = widgetSizes[widget.id] || 0;
     const nextSizeIndex = (currentSizeIndex + 1) % widget.sizes.length;
@@ -388,32 +389,34 @@ export default function Home() {
             isBounded
             isResizable={false}
           >
-            {activeWidgets.map((widget) => (
-              <div key={widget.id} className="group">
-                <div
-                  className="relative h-full p-6 rounded-3xl backdrop-blur-xl
-                           border border-white/20 shadow-lg transition-all duration-300
-                           hover:bg-white/5 cursor-pointer bg-white/10 text-white"
-                  onClick={() => cycleWidgetSize(widget)}
-                >
-                  <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full 
-                                bg-black/20 backdrop-blur-sm z-10 opacity-0 
-                                group-hover:opacity-100 transition-opacity cursor-move">
-                    <GripHorizontal className="w-4 h-4 text-white/70" />
+            {activeWidgets.map((widget) => {
+              const WidgetComponent = widget.component;
+              return (
+                <div key={widget.id} className="group">
+                  <div className="relative h-full p-6 rounded-3xl backdrop-blur-xl
+                               border border-white/20 shadow-lg transition-all duration-300
+                               hover:bg-white/5 cursor-pointer bg-white/10 text-white">
+                    <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full 
+                                  bg-black/20 backdrop-blur-sm z-10 opacity-0 
+                                  group-hover:opacity-100 transition-opacity cursor-move">
+                      <GripHorizontal className="w-4 h-4 text-white/70" />
+                    </div>
+                    <div className="absolute top-2 left-2 p-1.5 rounded-full 
+                                  bg-black/20 backdrop-blur-sm z-10 opacity-0 
+                                  group-hover:opacity-100 transition-opacity">
+                      <span className="text-xs text-white/70">
+                        {widgetSizes[widget.id] ? 
+                          `${widget.sizes[widgetSizes[widget.id]].w}×${widget.sizes[widgetSizes[widget.id]].h}` : 
+                          `${widget.defaultSize.w}×${widget.defaultSize.h}`}
+                      </span>
+                    </div>
+                    <div onClick={() => cycleWidgetSize(widget)}>
+                      <WidgetComponent />
+                    </div>
                   </div>
-                  <div className="absolute top-2 left-2 p-1.5 rounded-full 
-                                bg-black/20 backdrop-blur-sm z-10 opacity-0 
-                                group-hover:opacity-100 transition-opacity">
-                    <span className="text-xs text-white/70">
-                      {widgetSizes[widget.id] ? 
-                        `${widget.sizes[widgetSizes[widget.id]].w}×${widget.sizes[widgetSizes[widget.id]].h}` : 
-                        `${widget.defaultSize.w}×${widget.defaultSize.h}`}
-                    </span>
-                  </div>
-                  <widget.component />
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </ReactGridLayout>
         </div>
 
