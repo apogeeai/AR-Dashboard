@@ -548,12 +548,57 @@ export default function Home() {
                     <motion.div
                       className="absolute bottom-2 right-2 p-2 rounded-full 
                                 bg-black/30 backdrop-blur-sm z-10 opacity-0 
-                                group-hover:opacity-100 transition-opacity cursor-nwse-resize"
-                      drag
-                      dragMomentum={false}
-                      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-                      onDrag={(e, info) => {
-                        handleResizeDrag(widget.id, info.offset.x, info.offset.y);
+                                group-hover:opacity-100 transition-opacity cursor-se-resize"
+                      onPointerDown={(e) => {
+                        const targetWidget = activeWidgets.find(w => w.id === widget.id);
+                        if (!targetWidget) return;
+
+                        const startX = e.clientX;
+                        const startY = e.clientY;
+                        const currentSize = widget.sizes[widgetSizes[widget.id] || 0];
+
+                        const onPointerMove = (e: PointerEvent) => {
+                          const deltaX = e.clientX - startX;
+                          const deltaY = e.clientY - startY;
+                          const dragThreshold = 20;
+
+                          // Dragging up-left (make smaller)
+                          if (deltaX < -dragThreshold && deltaY < -dragThreshold) {
+                            // If current size is 4x16 or 16x16, make it 4x4
+                            if ((currentSize.w === 4 && currentSize.h === 16) || 
+                                (currentSize.w === 16 && currentSize.h === 16)) {
+                              const smallestSize = widget.sizes.findIndex(s => s.w === 4 && s.h === 4);
+                              if (smallestSize !== -1) {
+                                cycleWidgetSize(targetWidget, smallestSize);
+                                document.removeEventListener('pointermove', onPointerMove);
+                                document.removeEventListener('pointerup', onPointerUp);
+                              }
+                            }
+                            // Otherwise use normal size cycling
+                            else if (widgetSizes[widget.id] > 0) {
+                              cycleWidgetSize(targetWidget, widgetSizes[widget.id] - 1);
+                              document.removeEventListener('pointermove', onPointerMove);
+                              document.removeEventListener('pointerup', onPointerUp);
+                            }
+                          }
+                          // Dragging down-right (make bigger)
+                          else if (deltaX > dragThreshold && deltaY > dragThreshold) {
+                            const nextSizeIndex = (widgetSizes[widget.id] || 0) + 1;
+                            if (nextSizeIndex < widget.sizes.length) {
+                              cycleWidgetSize(targetWidget, nextSizeIndex);
+                              document.removeEventListener('pointermove', onPointerMove);
+                              document.removeEventListener('pointerup', onPointerUp);
+                            }
+                          }
+                        };
+
+                        const onPointerUp = () => {
+                          document.removeEventListener('pointermove', onPointerMove);
+                          document.removeEventListener('pointerup', onPointerUp);
+                        };
+
+                        document.addEventListener('pointermove', onPointerMove);
+                        document.addEventListener('pointerup', onPointerUp);
                       }}
                     >
                       <Maximize2 className="w-4 h-4 text-white/70" />
