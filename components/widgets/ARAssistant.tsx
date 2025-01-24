@@ -43,22 +43,7 @@ export default function ARAssistant() {
         </div>
       </div>
 
-      <div className="mt-4 flex gap-2">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="flex-1 p-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm text-center"
-        >
-          Voice Command
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="flex-1 p-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm text-center"
-        >
-          Type Message
-        </motion.button>
-      </div>
+    
     </div>
   );
 } 

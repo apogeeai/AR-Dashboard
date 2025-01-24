@@ -14,6 +14,11 @@ import TwitterTrends from "@/components/widgets/TwitterTrends";
 import CryptoTicker from "@/components/widgets/CryptoTicker";
 import FitnessTracker from "@/components/widgets/FitnessTracker";
 import SmartHome from "@/components/widgets/SmartHome";
+import ARAssistant from "@/components/widgets/ARAssistant";
+import ARCoach from "@/components/widgets/ARCoach";
+import ARMeditation from "@/components/widgets/ARMeditation";
+import ARWorkout from "@/components/widgets/ARWorkout";
+import ARNutrition from "@/components/widgets/ARNutrition";
 import { Layout } from 'react-grid-layout';
 import RGL, { WidthProvider } from "react-grid-layout";
 import 'react-grid-layout/css/styles.css';
@@ -109,6 +114,41 @@ const AVAILABLE_WIDGETS: Widget[] = [
     defaultSize: { w: 4, h: 4 },
     sizes: [{ w: 4, h: 4 }, { w: 8, h: 8 }]
   },
+  { 
+    id: 'ar-assistant', 
+    name: 'AR Assistant', 
+    component: ARAssistant, 
+    defaultSize: { w: 4, h: 4 },
+    sizes: [{ w: 4, h: 4 }, { w: 8, h: 4 }, { w: 8, h: 8 }]
+  },
+  { 
+    id: 'ar-coach', 
+    name: 'Life Coach', 
+    component: ARCoach, 
+    defaultSize: { w: 4, h: 8 },
+    sizes: [{ w: 4, h: 8 }, { w: 8, h: 8 }, { w: 16, h: 8 }]
+  },
+  { 
+    id: 'ar-meditation', 
+    name: 'Meditation Guide', 
+    component: ARMeditation, 
+    defaultSize: { w: 4, h: 4 },
+    sizes: [{ w: 4, h: 4 }, { w: 8, h: 4 }, { w: 8, h: 8 }]
+  },
+  { 
+    id: 'ar-workout', 
+    name: 'AR Workout', 
+    component: ARWorkout, 
+    defaultSize: { w: 4, h: 8 },
+    sizes: [{ w: 4, h: 8 }, { w: 8, h: 8 }, { w: 16, h: 8 }]
+  },
+  { 
+    id: 'ar-nutrition', 
+    name: 'Nutrition Advisor', 
+    component: ARNutrition, 
+    defaultSize: { w: 4, h: 8 },
+    sizes: [{ w: 4, h: 8 }, { w: 8, h: 8 }, { w: 16, h: 8 }]
+  }
 ];
 
 interface Sound {
@@ -118,10 +158,26 @@ interface Sound {
 }
 
 const SOUNDS: Sound[] = [
-  { id: 'white-noise', name: 'White Noise', file: '/sounds/white-noise.mp3' },
-  { id: 'rain', name: 'Rain', file: '/sounds/rain.mp3' },
-  { id: 'ocean', name: 'Ocean', file: '/sounds/ocean.mp3' },
-  { id: 'jungle', name: 'Jungle', file: '/sounds/jungle.mp3' },
+  { 
+    id: 'white-noise', 
+    name: 'White Noise', 
+    file: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b0796efc7.mp3?filename=white-noise-10min-94051.mp3'
+  },
+  { 
+    id: 'rain', 
+    name: 'Rain', 
+    file: 'https://cdn.pixabay.com/download/audio/2021/10/25/audio_1b2e0b878f.mp3?filename=rain-and-thunder-16705.mp3'
+  },
+  { 
+    id: 'ocean', 
+    name: 'Ocean', 
+    file: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_88447e769f.mp3?filename=ocean-waves-112906.mp3'
+  },
+  { 
+    id: 'jungle', 
+    name: 'Jungle', 
+    file: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_c4b45aaa34.mp3?filename=jungle-ambience-with-birds-6757.mp3'
+  },
 ];
 
 // Restore the original layout generation
@@ -217,13 +273,33 @@ export default function Home() {
     loadImages();
   }, []);
 
-  // Initialize audio with the first sound
+  // Initialize audio with better error handling
   useEffect(() => {
-    if (typeof Audio !== 'undefined') {
-      const newAudio = new Audio(SOUNDS[0].file);
-      newAudio.loop = true;
-      setAudio(newAudio);
+    if (typeof window !== 'undefined' && !audio) {
+      try {
+        const newAudio = new Audio();
+        newAudio.loop = true;
+        newAudio.preload = 'auto';
+        newAudio.volume = 0.5;
+        
+        // Add error handling
+        newAudio.addEventListener('error', (e) => {
+          console.error('Audio error:', e);
+          setIsPlaying(false);
+        });
+
+        setAudio(newAudio);
+      } catch (error) {
+        console.error('Audio initialization failed:', error);
+      }
     }
+
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+      }
+    };
   }, []);
 
   const addWidget = (widget: Widget) => {
@@ -246,10 +322,35 @@ export default function Home() {
     setShowAddMenu(false);
   };
 
-  // Restore original widget size cycling
-  const cycleWidgetSize = (widget: Widget) => {
+  const removeWidget = (widgetId: string) => {
+    setActiveWidgets(activeWidgets.filter(w => w.id !== widgetId));
+    setLayout(layout.filter(l => l.i !== widgetId));
+  };
+
+  const handleResizeDrag = (widgetId: string, dragX: number, dragY: number) => {
+    const widget = activeWidgets.find(w => w.id === widgetId);
+    if (!widget) return;
+
+    const currentSizeIndex = widgetSizes[widgetId] || 0;
+    const dragThreshold = 20;
+
+    // Dragging up-left (make smaller)
+    if (dragX < -dragThreshold && dragY < -dragThreshold && currentSizeIndex > 0) {
+      cycleWidgetSize(widget, currentSizeIndex - 1);
+    }
+    // Dragging down-right (make bigger)
+    else if (dragX > dragThreshold && dragY > dragThreshold && currentSizeIndex < widget.sizes.length - 1) {
+      cycleWidgetSize(widget, currentSizeIndex + 1);
+    }
+  };
+
+  // Update cycleWidgetSize to accept specific index
+  const cycleWidgetSize = (widget: Widget, specificIndex?: number) => {
     const currentSizeIndex = widgetSizes[widget.id] || 0;
-    const nextSizeIndex = (currentSizeIndex + 1) % widget.sizes.length;
+    const nextSizeIndex = specificIndex !== undefined ? 
+      specificIndex : 
+      (currentSizeIndex + 1) % widget.sizes.length;
+    
     const newSize = widget.sizes[nextSizeIndex];
     
     setWidgetSizes({
@@ -273,18 +374,32 @@ export default function Home() {
     }));
   };
 
-  // Handle sound changes
-  const changeSound = (soundId: string) => {
-    if (audio) {
-      const newSound = SOUNDS.find(s => s.id === soundId);
-      if (newSound) {
-        const wasPlaying = !audio.paused;
-        audio.src = newSound.file;
-        audio.load();
-        if (wasPlaying) {
-          audio.play();
+  // Update sound handling
+  const toggleSound = (soundId: string) => {
+    if (!audio) return;
+
+    if (currentSound === soundId && isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+    } else {
+      const sound = SOUNDS.find(s => s.id === soundId);
+      if (sound) {
+        audio.src = sound.file;
+        audio.currentTime = 0;
+        audio.volume = 0.5; // Set a comfortable default volume
+        
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsPlaying(true);
+              setCurrentSound(soundId);
+            })
+            .catch(error => {
+              console.error("Audio playback failed:", error);
+              setIsPlaying(false);
+            });
         }
-        setCurrentSound(soundId);
       }
     }
   };
@@ -342,7 +457,7 @@ export default function Home() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-16 right-4 w-64 p-4 rounded-lg bg-black/50 backdrop-blur-xl border border-white/20 shadow-lg"
+              className="absolute top-16 right-4 w-64 p-4 rounded-lg bg-black/50 backdrop-blur-xl border border-white/20 shadow-lg z-50"
             >
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-white/90 text-sm font-medium">Add Widget</h3>
@@ -396,11 +511,14 @@ export default function Home() {
                   <div className="relative h-full p-6 rounded-3xl backdrop-blur-xl
                                border border-white/20 shadow-lg transition-all duration-300
                                hover:bg-white/5 cursor-pointer bg-white/10 text-white">
+                    {/* Drag handle */}
                     <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full 
                                   bg-black/20 backdrop-blur-sm z-10 opacity-0 
                                   group-hover:opacity-100 transition-opacity cursor-move">
                       <GripHorizontal className="w-4 h-4 text-white/70" />
                     </div>
+
+                    {/* Size indicator */}
                     <div className="absolute top-2 left-2 p-1.5 rounded-full 
                                   bg-black/20 backdrop-blur-sm z-10 opacity-0 
                                   group-hover:opacity-100 transition-opacity">
@@ -410,6 +528,37 @@ export default function Home() {
                           `${widget.defaultSize.w}×${widget.defaultSize.h}`}
                       </span>
                     </div>
+
+                    {/* Delete button */}
+                    <motion.button
+                      className="absolute bottom-2 left-2 p-2 rounded-full 
+                                bg-black/30 backdrop-blur-sm z-10 opacity-0 
+                                group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeWidget(widget.id);
+                      }}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <X className="w-4 h-4 text-white/70" />
+                    </motion.button>
+
+                    {/* Resize handle */}
+                    <motion.div
+                      className="absolute bottom-2 right-2 p-2 rounded-full 
+                                bg-black/30 backdrop-blur-sm z-10 opacity-0 
+                                group-hover:opacity-100 transition-opacity cursor-nwse-resize"
+                      drag
+                      dragMomentum={false}
+                      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                      onDrag={(e, info) => {
+                        handleResizeDrag(widget.id, info.offset.x, info.offset.y);
+                      }}
+                    >
+                      <Maximize2 className="w-4 h-4 text-white/70" />
+                    </motion.div>
+
                     <div onClick={() => cycleWidgetSize(widget)}>
                       <WidgetComponent />
                     </div>
@@ -488,7 +637,7 @@ export default function Home() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      changeSound(sound.id);
+                      toggleSound(sound.id);
                       setShowSoundMenu(false);
                     }}
                     className={`flex items-center gap-3 w-full p-2 rounded-lg 
@@ -530,13 +679,8 @@ export default function Home() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
-              if (audio) {
-                if (isPlaying) {
-                  audio.pause();
-                } else {
-                  audio.play();
-                }
-                setIsPlaying(!isPlaying);
+              if (!showSoundMenu) {
+                toggleSound(currentSound);
               }
               setShowSoundMenu(!showSoundMenu);
             }}

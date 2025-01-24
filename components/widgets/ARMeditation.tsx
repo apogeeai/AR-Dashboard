@@ -87,8 +87,8 @@ export default function ARMeditation() {
       </div>
 
       <div className="mt-4 text-center">
-        <h4 className="text-sm font-medium mb-1">Mindful Breathing</h4>
-        <p className="text-xs text-white/70">Guided session with voice assistance</p>
+     
+   
       </div>
     </div>
   );
