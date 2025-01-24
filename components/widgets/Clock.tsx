@@ -14,7 +14,7 @@ export default function Clock() {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="p-6 rounded-3xl bg-white/10 backdrop-blur-md text-white shadow-lg"
+      className="  "
     >
       <h2 className="text-6xl font-bold">
         {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

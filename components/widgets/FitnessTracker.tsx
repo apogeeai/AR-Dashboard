@@ -7,7 +7,7 @@ export default function FitnessTracker() {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="p-6 rounded-3xl bg-white/10 backdrop-blur-md text-white shadow-lg border border-white/10"
+      className="   border border-white/10"
     >
       <div className="flex items-center mb-4">
         <Activity className="w-6 h-6 mr-2" />

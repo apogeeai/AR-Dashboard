@@ -7,7 +7,7 @@ export default function Weather() {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
-      className="p-6 rounded-3xl bg-white/10 backdrop-blur-md text-white shadow-lg"
+      className="  "
     >
       <div className="flex items-center justify-between">
         <div>
