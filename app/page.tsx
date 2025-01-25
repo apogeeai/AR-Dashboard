@@ -22,6 +22,10 @@ import ARNutrition from "@/components/widgets/ARNutrition";
 import { Layout } from 'react-grid-layout';
 import RGL, { WidthProvider } from "react-grid-layout";
 import 'react-grid-layout/css/styles.css';
+import { Raleway, Open_Sans } from 'next/font/google';
+
+const raleway = Raleway({ subsets: ['latin'] });
+const openSans = Open_Sans({ subsets: ['latin'] });
 
 const ReactGridLayout = WidthProvider(RGL);
 
@@ -154,7 +158,19 @@ const AVAILABLE_WIDGETS: Widget[] = [
 const SOUNDS = [
   {
     name: "White Noise",
-    url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b0796efc7.mp3?filename=white-noise-10min-94051.mp3"
+    url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b0796efc7.mp3"
+  },
+  {
+    name: "Rain",
+    url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3"
+  },
+  {
+    name: "Ocean Waves",
+    url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b0796efc7.mp3"
+  },
+  {
+    name: "Forest",
+    url: "https://cdn.pixabay.com/download/audio/2021/08/09/audio_dc39bde808.mp3"
   }
 ];
 
@@ -204,6 +220,7 @@ export default function Home() {
   const [showSoundMenu, setShowSoundMenu] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSound, setCurrentSound] = useState<HTMLAudioElement | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Autonomous smooth parallax effect
   const time = useMotionValue(0);
@@ -424,7 +441,7 @@ export default function Home() {
                   <X className="w-4 h-4 text-white/70" />
                 </motion.button>
               </div>
-              <div className="grid gap-2 max-h-[400px] overflow-y-auto">
+              <div className="grid gap-2">
                 {AVAILABLE_WIDGETS.map((widget) => (
                   <motion.button
                     key={widget.id}
@@ -462,9 +479,9 @@ export default function Home() {
               const WidgetComponent = widget.component;
               return (
                 <div key={widget.id} className="group">
-                  <div className="relative h-full p-6 rounded-3xl backdrop-blur-xl
+                  <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl
                                border border-white/20 shadow-lg transition-all duration-300
-                               hover:bg-white/5 cursor-pointer bg-white/10 text-white">
+                               hover:bg-white/5 cursor-pointer bg-white/10 text-white ${openSans.className}`}>
                     {/* Drag handle */}
                     <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full 
                                   bg-black/20 backdrop-blur-sm z-10 opacity-0 
@@ -516,32 +533,26 @@ export default function Home() {
                           const deltaY = e.clientY - startY;
                           const dragThreshold = 20;
 
+                          // Dragging up only (vertical resize)
+                          if (Math.abs(deltaX) < dragThreshold && deltaY < -dragThreshold) {
+                            if (currentSize.h === 16) {
+                              const smallerSize = widget.sizes.findIndex(s => s.w === currentSize.w && s.h === 4);
+                              if (smallerSize !== -1) {
+                                cycleWidgetSize(targetWidget, smallerSize);
+                                document.removeEventListener('pointermove', onPointerMove);
+                                document.removeEventListener('pointerup', onPointerUp);
+                              }
+                            }
+                          }
                           // Dragging up-left (make smaller)
-                          if (deltaX < -dragThreshold && deltaY < -dragThreshold) {
-                            // If current size is 4x16 or 16x16, make it 4x4
-                            if ((currentSize.w === 4 && currentSize.h === 16) || 
-                                (currentSize.w === 16 && currentSize.h === 16)) {
+                          else if (deltaX < -dragThreshold && deltaY < -dragThreshold) {
+                            if (currentSize.w === 16 && currentSize.h === 16) {
                               const smallestSize = widget.sizes.findIndex(s => s.w === 4 && s.h === 4);
                               if (smallestSize !== -1) {
                                 cycleWidgetSize(targetWidget, smallestSize);
                                 document.removeEventListener('pointermove', onPointerMove);
                                 document.removeEventListener('pointerup', onPointerUp);
                               }
-                            }
-                            // Otherwise use normal size cycling
-                            else if (widgetSizes[widget.id] > 0) {
-                              cycleWidgetSize(targetWidget, widgetSizes[widget.id] - 1);
-                              document.removeEventListener('pointermove', onPointerMove);
-                              document.removeEventListener('pointerup', onPointerUp);
-                            }
-                          }
-                          // Dragging down-right (make bigger)
-                          else if (deltaX > dragThreshold && deltaY > dragThreshold) {
-                            const nextSizeIndex = (widgetSizes[widget.id] || 0) + 1;
-                            if (nextSizeIndex < widget.sizes.length) {
-                              cycleWidgetSize(targetWidget, nextSizeIndex);
-                              document.removeEventListener('pointermove', onPointerMove);
-                              document.removeEventListener('pointerup', onPointerUp);
                             }
                           }
                         };
@@ -559,6 +570,7 @@ export default function Home() {
                     </motion.div>
 
                     <div onClick={() => cycleWidgetSize(widget)}>
+                      <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
                       <WidgetComponent />
                     </div>
                   </div>
@@ -630,25 +642,123 @@ export default function Home() {
                 </motion.button>
               </div>
               <div className="grid gap-2 w-48">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={toggleSound}
-                  className={`flex items-center gap-3 w-full p-2 rounded-lg 
-                            transition-all ${
-                              isPlaying ? 
-                              'bg-white/20' : 
-                              'bg-white/5 hover:bg-white/10'
-                            }`}
-                >
-                  <Volume2 className={`w-4 h-4 ${
-                    isPlaying ? 
-                    'text-white' : 
-                    'text-white/70'
-                  }`} />
-                  <span className="text-white/90 text-sm">{SOUNDS[0].name}</span>
-                </motion.button>
+                {SOUNDS.map((sound, index) => (
+                  <motion.button
+                    key={index}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      if (currentSound) {
+                        currentSound.pause();
+                        if (currentSound.src === sound.url) {
+                          setIsPlaying(false);
+                          return;
+                        }
+                      }
+                      const audio = new Audio(sound.url);
+                      audio.loop = true;
+                      audio.volume = 0.5;
+                      audio.play().catch(console.error);
+                      setCurrentSound(audio);
+                      setIsPlaying(true);
+                    }}
+                    className={`flex items-center gap-3 w-full p-2 rounded-lg 
+                              transition-all ${
+                                isPlaying && currentSound?.src === sound.url
+                                  ? 'bg-white/20'
+                                  : 'bg-white/5 hover:bg-white/10'
+                              }`}
+                  >
+                    <Volume2 className={`w-4 h-4 ${
+                      isPlaying && currentSound?.src === sound.url
+                        ? 'text-white'
+                        : 'text-white/70'
+                    }`} />
+                    <span className="text-white/90 text-sm">{sound.name}</span>
+                  </motion.button>
+                ))}
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Settings Modal */}
+        <AnimatePresence>
+          {showSettingsModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
+              onClick={() => setShowSettingsModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.95 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-[400px] bg-black/50 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-lg"
+              >
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className={`text-xl font-semibold text-white ${raleway.className}`}>Settings</h2>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowSettingsModal(false)}
+                    className="p-2 rounded-full hover:bg-white/10"
+                  >
+                    <X className="w-5 h-5 text-white/70" />
+                  </motion.button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Theme */}
+                  <div>
+                    <h3 className="text-sm font-medium text-white/90 mb-3">Theme</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left">
+                        <span className="text-sm font-medium text-white/90">Light</span>
+                      </button>
+                      <button className="p-3 rounded-xl bg-white/10 border border-white/20 text-left">
+                        <span className="text-sm font-medium text-white">Dark</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Layout */}
+                  <div>
+                    <h3 className="text-sm font-medium text-white/90 mb-3">Layout</h3>
+                    <div className="space-y-2">
+                      <button className="w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left">
+                        <span className="text-sm font-medium text-white/90">Compact</span>
+                      </button>
+                      <button className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-left">
+                        <span className="text-sm font-medium text-white">Comfortable</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Animations */}
+                  <div>
+                    <h3 className="text-sm font-medium text-white/90 mb-3">Animations</h3>
+                    <div className="space-y-3">
+                      <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10">
+                        <span className="text-sm text-white/90">Parallax Effect</span>
+                        <input type="checkbox" className="toggle" defaultChecked />
+                      </label>
+                      <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10">
+                        <span className="text-sm text-white/90">Transitions</span>
+                        <input type="checkbox" className="toggle" defaultChecked />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Reset */}
+                  <button className="w-full p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-medium">
+                    Reset All Settings
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -688,6 +798,7 @@ export default function Home() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             transition={{ delay: 1.2 }}
+            onClick={() => setShowSettingsModal(true)}
             className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border border-white/20 shadow-lg"
           >
             <Settings className="w-6 h-6 text-white" />

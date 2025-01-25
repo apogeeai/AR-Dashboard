@@ -33,13 +33,7 @@ export default function Calendar() {
       attendees: 4,
       duration: "1h"
     },
-    {
-      time: "5:30 PM",
-      title: "Team Social",
-      location: "Break Room",
-      attendees: 12,
-      duration: "1h 30min"
-    }
+   
   ];
 
   const eventItems = events.map((event, index) => (

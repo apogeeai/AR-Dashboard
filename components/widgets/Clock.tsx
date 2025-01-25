@@ -12,19 +12,10 @@ export default function Clock() {
     return () => clearInterval(interval);
   }, []);
 
-  // Calculate hand angles
-  const seconds = time.getSeconds();
-  const minutes = time.getMinutes();
-  const hours = time.getHours() % 12;
-
-  const secondDegrees = (seconds / 60) * 360;
-  const minuteDegrees = ((minutes + seconds / 60) / 60) * 360;
-  const hourDegrees = ((hours + minutes / 60) / 12) * 360;
-
   if (!mounted) {
     return (
       <div className="h-full w-full flex items-center justify-center">
-        <div className="w-40 h-40 rounded-full border-4 border-white/20 flex items-center justify-center">
+        <div className="w-40 h-40 rounded-full border-4 border-white/20 relative flex items-center justify-center">
           <span className="text-white/50">Loading...</span>
         </div>
       </div>
@@ -33,51 +24,57 @@ export default function Clock() {
 
   return (
     <div className="h-full w-full flex items-center justify-center">
-      <div className="relative w-40 h-40">
-        {/* Clock face */}
-        <div className="absolute inset-0 rounded-full border-4 border-white/20 bg-black/20 backdrop-blur-sm" />
-        
+      <div className="w-40 h-40 rounded-full border-4 border-white/20 relative backdrop-blur-sm">
         {/* Hour markers */}
         {[...Array(12)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-full h-full"
-            style={{ transform: `rotate(${i * 30}deg)` }}
-          >
-            <div className={`absolute top-0 left-1/2 -translate-x-1/2 bg-white/60
-              ${i % 3 === 0 ? 'w-1.5 h-3' : 'w-1 h-2'}`} />
-          </div>
+            className="absolute w-1 h-4 bg-white/50"
+            style={{
+              transform: `rotate(${i * 30}deg) translateY(-50%)`,
+              transformOrigin: "bottom center",
+              left: "calc(50% - 2px)",
+              top: "4px"
+            }}
+          />
         ))}
 
         {/* Hour hand */}
         <div
-          className="absolute w-full h-full transition-transform duration-500"
-          style={{ transform: `rotate(${hourDegrees}deg)` }}
-        >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[4px] h-[35%] bg-white rounded-full origin-bottom shadow-lg" />
-        </div>
+          className="absolute w-1.5 h-16 bg-white rounded-full shadow-lg"
+          style={{
+            transform: `rotate(${((time.getHours() % 12) * 30) + (time.getMinutes() * 0.5)}deg)`,
+            transformOrigin: "bottom center",
+            left: "calc(50% - 3px)",
+            bottom: "50%"
+          }}
+        />
 
         {/* Minute hand */}
         <div
-          className="absolute w-full h-full transition-transform duration-200"
-          style={{ transform: `rotate(${minuteDegrees}deg)` }}
-        >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[3px] h-[45%] bg-white/90 rounded-full origin-bottom shadow-md" />
-        </div>
+          className="absolute w-1 h-20 bg-white/90 rounded-full shadow-md"
+          style={{
+            transform: `rotate(${time.getMinutes() * 6}deg)`,
+            transformOrigin: "bottom center",
+            left: "calc(50% - 2px)",
+            bottom: "50%"
+          }}
+        />
 
         {/* Second hand */}
         <div
-          className="absolute w-full h-full"
-          style={{ transform: `rotate(${secondDegrees}deg)` }}
-        >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[2px] h-[50%] bg-blue-400 rounded-full origin-bottom shadow" />
-        </div>
+          className="absolute w-0.5 h-24 bg-purple-400 rounded-full shadow-sm"
+          style={{
+            transform: `rotate(${time.getSeconds() * 6}deg)`,
+            transformOrigin: "bottom center",
+            left: "calc(50% - 1px)",
+            bottom: "50%"
+          }}
+        />
 
-        {/* Center dot with ring */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="w-4 h-4 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-lg" />
-          </div>
+        {/* Center dot */}
+        <div className="absolute w-4 h-4 bg-white rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 shadow-md">
+          <div className="absolute w-2 h-2 bg-purple-400 rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
         </div>
       </div>
     </div>
