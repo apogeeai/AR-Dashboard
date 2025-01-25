@@ -151,33 +151,11 @@ const AVAILABLE_WIDGETS: Widget[] = [
   }
 ];
 
-interface Sound {
-  id: string;
-  name: string;
-  file: string;
-}
-
-const SOUNDS: Sound[] = [
-  { 
-    id: 'white-noise', 
-    name: 'White Noise', 
-    file: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b0796efc7.mp3?filename=white-noise-10min-94051.mp3'
-  },
-  { 
-    id: 'rain', 
-    name: 'Rain', 
-    file: 'https://cdn.pixabay.com/download/audio/2021/10/25/audio_1b2e0b878f.mp3?filename=rain-and-thunder-16705.mp3'
-  },
-  { 
-    id: 'ocean', 
-    name: 'Ocean', 
-    file: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_88447e769f.mp3?filename=ocean-waves-112906.mp3'
-  },
-  { 
-    id: 'jungle', 
-    name: 'Jungle', 
-    file: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_c4b45aaa34.mp3?filename=jungle-ambience-with-birds-6757.mp3'
-  },
+const SOUNDS = [
+  {
+    name: "White Noise",
+    url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b0796efc7.mp3?filename=white-noise-10min-94051.mp3"
+  }
 ];
 
 // Restore the original layout generation
@@ -225,36 +203,35 @@ export default function Home() {
   const [widgetSizes, setWidgetSizes] = useState<Record<string, number>>({});
   const [showSoundMenu, setShowSoundMenu] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentSound, setCurrentSound] = useState<string>('white-noise');
-  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [currentSound, setCurrentSound] = useState<HTMLAudioElement | null>(null);
 
   // Autonomous smooth parallax effect
   const time = useMotionValue(0);
-  const springConfig = { damping: 100, stiffness: 50, mass: 3 };
+  const springConfig = { damping: 85, stiffness: 45, mass: 3 };
   
   const moveX = useSpring(
-    useTransform(time, [0, 100], [-11, 11]), // Slightly increased from -10, 10
+    useTransform(time, [0, 100], [-13.2, 13.2]),
     springConfig
   );
   
   const moveY = useSpring(
-    useTransform(time, [0, 100], [-5.5, 5.5]), // Slightly increased from -5, 5
+    useTransform(time, [0, 100], [-6.6, 6.6]),
     springConfig
   );
   
   const rotateX = useSpring(
-    useTransform(time, [0, 100], [-1.1, 1.1]), // Slightly increased from -1, 1
+    useTransform(time, [0, 100], [-1.32, 1.32]),
     springConfig
   );
   
   const rotateY = useSpring(
-    useTransform(time, [0, 100], [-1.1, 1.1]), // Slightly increased from -1, 1
+    useTransform(time, [0, 100], [-1.32, 1.32]),
     springConfig
   );
 
   useEffect(() => {
     const interval = setInterval(() => {
-      time.set(Math.sin(Date.now() / 5000) * 100);
+      time.set(Math.sin(Date.now() / 4500) * 100);
     }, 16);
     return () => clearInterval(interval);
   }, [time]);
@@ -273,31 +250,20 @@ export default function Home() {
     loadImages();
   }, []);
 
-  // Initialize audio with better error handling
+  // Initialize audio only if window is defined and audio isn't already initialized
   useEffect(() => {
-    if (typeof window !== 'undefined' && !audio) {
-      try {
-        const newAudio = new Audio();
-        newAudio.loop = true;
-        newAudio.preload = 'auto';
-        newAudio.volume = 0.5;
-        
-        // Add error handling
-        newAudio.addEventListener('error', (e) => {
-          console.error('Audio error:', e);
-          setIsPlaying(false);
-        });
-
-        setAudio(newAudio);
-      } catch (error) {
-        console.error('Audio initialization failed:', error);
-      }
+    if (typeof window !== 'undefined' && !currentSound) {
+      const audio = new Audio(SOUNDS[0].url);
+      audio.loop = true;
+      audio.volume = 0.5; // Set a comfortable default volume
+      setCurrentSound(audio);
     }
 
+    // Cleanup
     return () => {
-      if (audio) {
-        audio.pause();
-        audio.src = '';
+      if (currentSound) {
+        currentSound.pause();
+        setCurrentSound(null);
       }
     };
   }, []);
@@ -374,34 +340,22 @@ export default function Home() {
     }));
   };
 
-  // Update sound handling
-  const toggleSound = (soundId: string) => {
-    if (!audio) return;
+  const toggleSound = () => {
+    if (!currentSound) return;
 
-    if (currentSound === soundId && isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
+    if (isPlaying) {
+      currentSound.pause();
     } else {
-      const sound = SOUNDS.find(s => s.id === soundId);
-      if (sound) {
-        audio.src = sound.file;
-        audio.currentTime = 0;
-        audio.volume = 0.5; // Set a comfortable default volume
-        
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-              setCurrentSound(soundId);
-            })
-            .catch(error => {
-              console.error("Audio playback failed:", error);
-              setIsPlaying(false);
-            });
-        }
+      // Handle playback failure
+      const playPromise = currentSound.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error("Playback failed:", error);
+        });
       }
     }
+    setIsPlaying(!isPlaying);
+    setShowSoundMenu(false);
   };
 
   return (
@@ -676,30 +630,24 @@ export default function Home() {
                 </motion.button>
               </div>
               <div className="grid gap-2 w-48">
-                {SOUNDS.map((sound) => (
-                  <motion.button
-                    key={sound.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      toggleSound(sound.id);
-                      setShowSoundMenu(false);
-                    }}
-                    className={`flex items-center gap-3 w-full p-2 rounded-lg 
-                              transition-all ${
-                                currentSound === sound.id ? 
-                                'bg-white/20' : 
-                                'bg-white/5 hover:bg-white/10'
-                              }`}
-                  >
-                    <Volume2 className={`w-4 h-4 ${
-                      currentSound === sound.id ? 
-                      'text-white' : 
-                      'text-white/70'
-                    }`} />
-                    <span className="text-white/90 text-sm">{sound.name}</span>
-                  </motion.button>
-                ))}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={toggleSound}
+                  className={`flex items-center gap-3 w-full p-2 rounded-lg 
+                            transition-all ${
+                              isPlaying ? 
+                              'bg-white/20' : 
+                              'bg-white/5 hover:bg-white/10'
+                            }`}
+                >
+                  <Volume2 className={`w-4 h-4 ${
+                    isPlaying ? 
+                    'text-white' : 
+                    'text-white/70'
+                  }`} />
+                  <span className="text-white/90 text-sm">{SOUNDS[0].name}</span>
+                </motion.button>
               </div>
             </motion.div>
           )}
@@ -725,7 +673,7 @@ export default function Home() {
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               if (!showSoundMenu) {
-                toggleSound(currentSound);
+                toggleSound();
               }
               setShowSoundMenu(!showSoundMenu);
             }}
