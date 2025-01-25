@@ -19,6 +19,11 @@ import ARCoach from "@/components/widgets/ARCoach";
 import ARMeditation from "@/components/widgets/ARMeditation";
 import ARWorkout from "@/components/widgets/ARWorkout";
 import ARNutrition from "@/components/widgets/ARNutrition";
+import ARSocialPulse from "@/components/widgets/ARSocialPulse";
+import ARMemoryJournal from "@/components/widgets/ARMemoryJournal";
+import ARMoodTracker from "@/components/widgets/ARMoodTracker";
+import ARHabitGarden from "@/components/widgets/ARHabitGarden";
+import ARDreamAnalyzer from "@/components/widgets/ARDreamAnalyzer";
 import { Layout } from 'react-grid-layout';
 import RGL, { WidthProvider } from "react-grid-layout";
 import 'react-grid-layout/css/styles.css';
@@ -152,21 +157,48 @@ const AVAILABLE_WIDGETS: Widget[] = [
     component: ARNutrition, 
     defaultSize: { w: 4, h: 8 },
     sizes: [{ w: 4, h: 8 }, { w: 8, h: 8 }, { w: 16, h: 8 }]
+  },
+  { 
+    id: 'ar-social-pulse', 
+    name: 'Social Pulse', 
+    component: ARSocialPulse, 
+    defaultSize: { w: 4, h: 4 },
+    sizes: [{ w: 4, h: 4 }, { w: 8, h: 8 }]
+  },
+  { 
+    id: 'ar-memory-journal', 
+    name: 'Memory Journal', 
+    component: ARMemoryJournal, 
+    defaultSize: { w: 4, h: 8 },
+    sizes: [{ w: 4, h: 8 }, { w: 8, h: 8 }]
+  },
+  { 
+    id: 'ar-mood-tracker', 
+    name: 'Mood Insights', 
+    component: ARMoodTracker, 
+    defaultSize: { w: 4, h: 4 },
+    sizes: [{ w: 4, h: 4 }, { w: 8, h: 4 }]
+  },
+  { 
+    id: 'ar-habit-garden', 
+    name: 'Habit Garden', 
+    component: ARHabitGarden, 
+    defaultSize: { w: 4, h: 8 },
+    sizes: [{ w: 4, h: 8 }, { w: 8, h: 8 }]
+  },
+  { 
+    id: 'ar-dream-analyzer', 
+    name: 'Dream Analyzer', 
+    component: ARDreamAnalyzer, 
+    defaultSize: { w: 4, h: 8 },
+    sizes: [{ w: 4, h: 8 }, { w: 8, h: 8 }]
   }
 ];
 
 const SOUNDS = [
   {
-    name: "White Noise",
-    url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b0796efc7.mp3"
-  },
-  {
     name: "Rain",
-    url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3"
-  },
-  {
-    name: "Ocean Waves",
-    url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b0796efc7.mp3"
+    url: "/sounds/rain.mp3"
   },
   {
     name: "Forest",
@@ -227,6 +259,7 @@ export default function Home() {
   const [transitionsEnabled, setTransitionsEnabled] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 16; // Maximum rows per page
+  const [widgetPage, setWidgetPage] = useState(0);
 
   // Autonomous smooth parallax effect
   const time = useMotionValue(0);
@@ -273,16 +306,15 @@ export default function Home() {
     loadImages();
   }, []);
 
-  // Initialize audio only if window is defined and audio isn't already initialized
+  // Initialize audio only if window is defined
   useEffect(() => {
-    if (typeof window !== 'undefined' && !currentSound) {
+    if (typeof window !== 'undefined') {
       const audio = new Audio(SOUNDS[0].url);
       audio.loop = true;
-      audio.volume = 0.5; // Set a comfortable default volume
+      audio.volume = 0.5;
       setCurrentSound(audio);
     }
 
-    // Cleanup
     return () => {
       if (currentSound) {
         currentSound.pause();
@@ -524,8 +556,8 @@ export default function Home() {
                   <X className="w-4 h-4 text-white/70" />
                 </motion.button>
               </div>
-              <div className="grid gap-2">
-                {AVAILABLE_WIDGETS.map((widget) => (
+              <div className="grid gap-2 h-[492px]">
+                {AVAILABLE_WIDGETS.slice(widgetPage * 12, (widgetPage + 1) * 12).map((widget) => (
                   <motion.button
                     key={widget.id}
                     whileHover={{ scale: 1.02 }}
@@ -540,6 +572,31 @@ export default function Home() {
                   </motion.button>
                 ))}
               </div>
+              {Math.ceil(AVAILABLE_WIDGETS.length / 12) > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-white/10">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setWidgetPage(prev => Math.max(0, prev - 1))}
+                    disabled={widgetPage === 0}
+                    className={`p-1.5 rounded-full ${widgetPage === 0 ? 'text-white/30' : 'text-white hover:bg-white/10'}`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </motion.button>
+                  <span className="text-sm font-medium text-white">
+                    {widgetPage + 1} / {Math.ceil(AVAILABLE_WIDGETS.length / 12)}
+                  </span>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setWidgetPage(prev => Math.min(Math.ceil(AVAILABLE_WIDGETS.length / 12) - 1, prev + 1))}
+                    disabled={widgetPage === Math.ceil(AVAILABLE_WIDGETS.length / 12) - 1}
+                    className={`p-1.5 rounded-full ${widgetPage === Math.ceil(AVAILABLE_WIDGETS.length / 12) - 1 ? 'text-white/30' : 'text-white hover:bg-white/10'}`}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </motion.button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -585,7 +642,14 @@ export default function Home() {
                 const WidgetComponent = widget.component;
                 return (
                   <div key={widget.id} className="group">
-                    <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/5 cursor-pointer bg-white/10 text-white select-none ${openSans.className}`}>
+                    <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border border-white/10 shadow-lg transition-all duration-300 
+                      hover:bg-white/10 cursor-pointer bg-white/5 text-white select-none overflow-hidden
+                      before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/[0.15] before:to-transparent before:rounded-3xl before:pointer-events-none
+                      after:absolute after:bottom-0 after:left-0 after:w-24 after:h-24 after:bg-gradient-radial after:from-white/20 after:to-transparent after:opacity-0 after:transition-opacity
+                      after:pointer-events-none group-hover:after:opacity-100 ${openSans.className}`}>
+                      {/* Shine effect */}
+                      <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity blur-xl pointer-events-none" />
+
                       {/* Drag handle */}
                       <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full bg-black/20 backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
                         <GripHorizontal className="w-4 h-4 text-white/70" />
@@ -640,7 +704,14 @@ export default function Home() {
               const WidgetComponent = widget.component;
               return (
                 <div key={widget.id} className="group">
-                  <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/5 cursor-pointer bg-white/10 text-white select-none ${openSans.className}`}>
+                  <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border border-white/10 shadow-lg transition-all duration-300 
+                    hover:bg-white/10 cursor-pointer bg-white/5 text-white select-none overflow-hidden
+                    before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/[0.15] before:to-transparent before:rounded-3xl before:pointer-events-none
+                    after:absolute after:bottom-0 after:left-0 after:w-24 after:h-24 after:bg-gradient-radial after:from-white/20 after:to-transparent after:opacity-0 after:transition-opacity
+                    after:pointer-events-none group-hover:after:opacity-100 ${openSans.className}`}>
+                    {/* Shine effect */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity blur-xl pointer-events-none" />
+
                     {/* Delete button */}
                     <motion.button
                       className="absolute top-2 right-2 p-2 rounded-full bg-black/30 backdrop-blur-sm z-10"
