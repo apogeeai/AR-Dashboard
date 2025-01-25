@@ -664,34 +664,78 @@ export default function Home() {
             })}
           </div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 flex items-center gap-4 p-2 rounded-full bg-black/50 backdrop-blur-xl border border-white/20">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
-                disabled={currentPage === 0}
-                className={`p-2 rounded-full ${currentPage === 0 ? 'text-white/30' : 'text-white hover:bg-white/10'}`}
+          {/* Control Buttons */}
+          <div className="fixed bottom-4 right-4 flex gap-2">
+            {totalPages > 1 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2"
               >
-                <ChevronLeft className="w-5 h-5" />
-              </motion.button>
-              
-              <span className="text-sm font-medium text-white">
-                {currentPage + 1} / {totalPages}
-              </span>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
-                disabled={currentPage === totalPages - 1}
-                className={`p-2 rounded-full ${currentPage === totalPages - 1 ? 'text-white/30' : 'text-white hover:bg-white/10'}`}
-              >
-                <ChevronRight className="w-5 h-5" />
-              </motion.button>
-            </div>
-          )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                  disabled={currentPage === 0}
+                  className={`p-3 rounded-full backdrop-blur-xl border border-white/20 shadow-lg ${
+                    currentPage === 0 ? 'bg-white/5 text-white/30' : 'bg-white/10 hover:bg-white/20 text-white'
+                  }`}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                  disabled={currentPage === totalPages - 1}
+                  className={`p-3 rounded-full backdrop-blur-xl border border-white/20 shadow-lg ${
+                    currentPage === totalPages - 1 ? 'bg-white/5 text-white/30' : 'bg-white/10 hover:bg-white/20 text-white'
+                  }`}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </motion.button>
+              </motion.div>
+            )}
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ delay: 1.2 }}
+              onClick={() => setShowBgSelector(!showBgSelector)}
+              className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border border-white/20 shadow-lg"
+            >
+              <Image className="w-6 h-6 text-white" />
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                if (!showSoundMenu) {
+                  toggleSound();
+                }
+                setShowSoundMenu(!showSoundMenu);
+              }}
+              className={`p-3 rounded-full backdrop-blur-xl transition-all border border-white/20 shadow-lg
+                        ${isPlaying ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}
+            >
+              <Volume2 className="w-6 h-6 text-white" />
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ delay: 1.2 }}
+              onClick={() => setShowSettingsModal(true)}
+              className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border border-white/20 shadow-lg"
+            >
+              <Settings className="w-6 h-6 text-white" />
+            </motion.button>
+          </div>
         </div>
 
         {/* Background Image Selector */}
@@ -937,48 +981,6 @@ export default function Home() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Control Buttons */}
-        <div className="fixed bottom-4 right-4 flex gap-2">
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ delay: 1.2 }}
-            onClick={() => setShowBgSelector(!showBgSelector)}
-            className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border border-white/20 shadow-lg"
-          >
-            <Image className="w-6 h-6 text-white" />
-          </motion.button>
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              if (!showSoundMenu) {
-                toggleSound();
-              }
-              setShowSoundMenu(!showSoundMenu);
-            }}
-            className={`p-3 rounded-full backdrop-blur-xl transition-all border border-white/20 shadow-lg
-                      ${isPlaying ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}
-          >
-            <Volume2 className="w-6 h-6 text-white" />
-          </motion.button>
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ delay: 1.2 }}
-            onClick={() => setShowSettingsModal(true)}
-            className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border border-white/20 shadow-lg"
-          >
-            <Settings className="w-6 h-6 text-white" />
-          </motion.button>
-        </div>
       </div>
     </div>
   );
