@@ -7,8 +7,7 @@ export default function Music() {
   const queue = [
     {
       title: "Ambient Flow",
-      artist: "Zen Masters",
-      duration: "5:32"
+       duration: "5:32"
     },
   
  
@@ -67,10 +66,6 @@ export default function Music() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-3">
-        <ListMusic className="w-4 h-4 text-white/70" />
-        <h4 className="text-sm font-medium">Up Next</h4>
-      </div>
 
       <ScrollContainer 
         items={queueItems}

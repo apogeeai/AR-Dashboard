@@ -221,34 +221,38 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSound, setCurrentSound] = useState<HTMLAudioElement | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [theme, setTheme] = useState('dark');
+  const [layoutMode, setLayoutMode] = useState('comfortable');
+  const [parallaxEnabled, setParallaxEnabled] = useState(true);
+  const [transitionsEnabled, setTransitionsEnabled] = useState(true);
 
   // Autonomous smooth parallax effect
   const time = useMotionValue(0);
-  const springConfig = { damping: 85, stiffness: 45, mass: 3 };
+  const springConfig = { damping: 70, stiffness: 55, mass: 2.5 };
   
   const moveX = useSpring(
-    useTransform(time, [0, 100], [-13.2, 13.2]),
+    useTransform(time, [0, 100], [-16, 16]),
     springConfig
   );
   
   const moveY = useSpring(
-    useTransform(time, [0, 100], [-6.6, 6.6]),
+    useTransform(time, [0, 100], [-8, 8]),
     springConfig
   );
   
   const rotateX = useSpring(
-    useTransform(time, [0, 100], [-1.32, 1.32]),
+    useTransform(time, [0, 100], [-2, 2]),
     springConfig
   );
   
   const rotateY = useSpring(
-    useTransform(time, [0, 100], [-1.32, 1.32]),
+    useTransform(time, [0, 100], [-2, 2]),
     springConfig
   );
 
   useEffect(() => {
     const interval = setInterval(() => {
-      time.set(Math.sin(Date.now() / 4500) * 100);
+      time.set(Math.sin(Date.now() / 3500) * 100);
     }, 16);
     return () => clearInterval(interval);
   }, [time]);
@@ -310,21 +314,62 @@ export default function Home() {
     setLayout(layout.filter(l => l.i !== widgetId));
   };
 
-  const handleResizeDrag = (widgetId: string, dragX: number, dragY: number) => {
-    const widget = activeWidgets.find(w => w.id === widgetId);
-    if (!widget) return;
+  const handleResizeDrag = (widget: Widget, startX: number, startY: number, currentSize: { w: number; h: number }) => {
+    const onPointerMove = (e: PointerEvent) => {
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      const dragThreshold = 20;
 
-    const currentSizeIndex = widgetSizes[widgetId] || 0;
-    const dragThreshold = 20;
+      // Calculate the direction of drag
+      const isDraggingLeft = deltaX < -dragThreshold;
+      const isDraggingRight = deltaX > dragThreshold;
+      const isDraggingUp = deltaY < -dragThreshold;
+      const isDraggingDown = deltaY > dragThreshold;
 
-    // Dragging up-left (make smaller)
-    if (dragX < -dragThreshold && dragY < -dragThreshold && currentSizeIndex > 0) {
-      cycleWidgetSize(widget, currentSizeIndex - 1);
-    }
-    // Dragging down-right (make bigger)
-    else if (dragX > dragThreshold && dragY > dragThreshold && currentSizeIndex < widget.sizes.length - 1) {
-      cycleWidgetSize(widget, currentSizeIndex + 1);
-    }
+      // Find available sizes
+      const availableSizes = widget.sizes;
+      const currentIndex = widgetSizes[widget.id] || 0;
+
+      // Helper to find closest size
+      const findClosestSize = (targetW: number, targetH: number) => {
+        return availableSizes.findIndex(size => 
+          size.w <= targetW && size.h <= targetH
+        );
+      };
+
+      // Determine target size based on drag direction
+      let targetIndex = currentIndex;
+
+      if (isDraggingLeft && isDraggingUp) {
+        // Shrink both dimensions
+        targetIndex = findClosestSize(currentSize.w - 4, currentSize.h - 4);
+      } else if (isDraggingRight && isDraggingDown) {
+        // Grow both dimensions
+        const nextSize = availableSizes[currentIndex + 1];
+        if (nextSize) targetIndex = currentIndex + 1;
+      } else if (isDraggingLeft || isDraggingUp) {
+        // Shrink to next smaller size
+        if (currentIndex > 0) targetIndex = currentIndex - 1;
+      } else if (isDraggingRight || isDraggingDown) {
+        // Grow to next larger size
+        if (currentIndex < availableSizes.length - 1) targetIndex = currentIndex + 1;
+      }
+
+      // Apply the size change if different
+      if (targetIndex !== currentIndex && targetIndex !== -1) {
+        cycleWidgetSize(widget, targetIndex);
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', onPointerUp);
+      }
+    };
+
+    const onPointerUp = () => {
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+    };
+
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
   };
 
   // Update cycleWidgetSize to accept specific index
@@ -381,10 +426,10 @@ export default function Home() {
       <motion.div
         className="absolute top-0 left-0 w-full h-full"
         style={{
-          x: moveX,
-          y: moveY,
-          rotateX: rotateX,
-          rotateY: rotateY,
+          x: parallaxEnabled ? moveX : 0,
+          y: parallaxEnabled ? moveY : 0,
+          rotateX: parallaxEnabled ? rotateX : 0,
+          rotateY: parallaxEnabled ? rotateY : 0,
           scale: 1.05,
           transformStyle: "preserve-3d",
           transformOrigin: "center center"
@@ -481,7 +526,7 @@ export default function Home() {
                 <div key={widget.id} className="group">
                   <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl
                                border border-white/20 shadow-lg transition-all duration-300
-                               hover:bg-white/5 cursor-pointer bg-white/10 text-white ${openSans.className}`}>
+                               hover:bg-white/5 cursor-pointer bg-white/10 text-white select-none ${openSans.className}`}>
                     {/* Drag handle */}
                     <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full 
                                   bg-black/20 backdrop-blur-sm z-10 opacity-0 
@@ -490,15 +535,7 @@ export default function Home() {
                     </div>
 
                     {/* Size indicator */}
-                    <div className="absolute top-2 left-2 p-1.5 rounded-full 
-                                  bg-black/20 backdrop-blur-sm z-10 opacity-0 
-                                  group-hover:opacity-100 transition-opacity">
-                      <span className="text-xs text-white/70">
-                        {widgetSizes[widget.id] ? 
-                          `${widget.sizes[widgetSizes[widget.id]].w}×${widget.sizes[widgetSizes[widget.id]].h}` : 
-                          `${widget.defaultSize.w}×${widget.defaultSize.h}`}
-                      </span>
-                    </div>
+                  
 
                     {/* Delete button */}
                     <motion.button
@@ -521,55 +558,21 @@ export default function Home() {
                                 bg-black/30 backdrop-blur-sm z-10 opacity-0 
                                 group-hover:opacity-100 transition-opacity cursor-se-resize"
                       onPointerDown={(e) => {
+                        e.preventDefault(); // Prevent text selection
                         const targetWidget = activeWidgets.find(w => w.id === widget.id);
                         if (!targetWidget) return;
 
                         const startX = e.clientX;
                         const startY = e.clientY;
                         const currentSize = widget.sizes[widgetSizes[widget.id] || 0];
-
-                        const onPointerMove = (e: PointerEvent) => {
-                          const deltaX = e.clientX - startX;
-                          const deltaY = e.clientY - startY;
-                          const dragThreshold = 20;
-
-                          // Dragging up only (vertical resize)
-                          if (Math.abs(deltaX) < dragThreshold && deltaY < -dragThreshold) {
-                            if (currentSize.h === 16) {
-                              const smallerSize = widget.sizes.findIndex(s => s.w === currentSize.w && s.h === 4);
-                              if (smallerSize !== -1) {
-                                cycleWidgetSize(targetWidget, smallerSize);
-                                document.removeEventListener('pointermove', onPointerMove);
-                                document.removeEventListener('pointerup', onPointerUp);
-                              }
-                            }
-                          }
-                          // Dragging up-left (make smaller)
-                          else if (deltaX < -dragThreshold && deltaY < -dragThreshold) {
-                            if (currentSize.w === 16 && currentSize.h === 16) {
-                              const smallestSize = widget.sizes.findIndex(s => s.w === 4 && s.h === 4);
-                              if (smallestSize !== -1) {
-                                cycleWidgetSize(targetWidget, smallestSize);
-                                document.removeEventListener('pointermove', onPointerMove);
-                                document.removeEventListener('pointerup', onPointerUp);
-                              }
-                            }
-                          }
-                        };
-
-                        const onPointerUp = () => {
-                          document.removeEventListener('pointermove', onPointerMove);
-                          document.removeEventListener('pointerup', onPointerUp);
-                        };
-
-                        document.addEventListener('pointermove', onPointerMove);
-                        document.addEventListener('pointerup', onPointerUp);
+                        
+                        handleResizeDrag(targetWidget, startX, startY, currentSize);
                       }}
                     >
                       <Maximize2 className="w-4 h-4 text-white/70" />
                     </motion.div>
 
-                    <div onClick={() => cycleWidgetSize(widget)}>
+                    <div>
                       <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
                       <WidgetComponent />
                     </div>
@@ -716,10 +719,24 @@ export default function Home() {
                   <div>
                     <h3 className="text-sm font-medium text-white/90 mb-3">Theme</h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <button className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left">
+                      <button 
+                        onClick={() => setTheme('light')}
+                        className={`p-3 rounded-xl ${
+                          theme === 'light' 
+                            ? 'bg-white/20 border-white/20' 
+                            : 'bg-white/5 hover:bg-white/10 border-white/10'
+                        } border text-left`}
+                      >
                         <span className="text-sm font-medium text-white/90">Light</span>
                       </button>
-                      <button className="p-3 rounded-xl bg-white/10 border border-white/20 text-left">
+                      <button 
+                        onClick={() => setTheme('dark')}
+                        className={`p-3 rounded-xl ${
+                          theme === 'dark' 
+                            ? 'bg-white/20 border-white/20' 
+                            : 'bg-white/5 hover:bg-white/10 border-white/10'
+                        } border text-left`}
+                      >
                         <span className="text-sm font-medium text-white">Dark</span>
                       </button>
                     </div>
@@ -729,10 +746,38 @@ export default function Home() {
                   <div>
                     <h3 className="text-sm font-medium text-white/90 mb-3">Layout</h3>
                     <div className="space-y-2">
-                      <button className="w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left">
+                      <button 
+                        onClick={() => {
+                          setLayoutMode('compact');
+                          setLayout(layout.map(item => ({
+                            ...item,
+                            y: Math.floor(item.y * 0.8),
+                            h: Math.floor(item.h * 0.8)
+                          })));
+                        }}
+                        className={`w-full p-3 rounded-xl ${
+                          layoutMode === 'compact' 
+                            ? 'bg-white/20 border-white/20' 
+                            : 'bg-white/5 hover:bg-white/10 border-white/10'
+                        } border text-left`}
+                      >
                         <span className="text-sm font-medium text-white/90">Compact</span>
                       </button>
-                      <button className="w-full p-3 rounded-xl bg-white/10 border border-white/20 text-left">
+                      <button 
+                        onClick={() => {
+                          setLayoutMode('comfortable');
+                          setLayout(layout.map(item => ({
+                            ...item,
+                            y: Math.floor(item.y * 1.25),
+                            h: Math.floor(item.h * 1.25)
+                          })));
+                        }}
+                        className={`w-full p-3 rounded-xl ${
+                          layoutMode === 'comfortable' 
+                            ? 'bg-white/20 border-white/20' 
+                            : 'bg-white/5 hover:bg-white/10 border-white/10'
+                        } border text-left`}
+                      >
                         <span className="text-sm font-medium text-white">Comfortable</span>
                       </button>
                     </div>
@@ -744,17 +789,36 @@ export default function Home() {
                     <div className="space-y-3">
                       <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10">
                         <span className="text-sm text-white/90">Parallax Effect</span>
-                        <input type="checkbox" className="toggle" defaultChecked />
+                        <input 
+                          type="checkbox" 
+                          className="toggle" 
+                          checked={parallaxEnabled}
+                          onChange={(e) => setParallaxEnabled(e.target.checked)}
+                        />
                       </label>
                       <label className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10">
                         <span className="text-sm text-white/90">Transitions</span>
-                        <input type="checkbox" className="toggle" defaultChecked />
+                        <input 
+                          type="checkbox" 
+                          className="toggle" 
+                          checked={transitionsEnabled}
+                          onChange={(e) => setTransitionsEnabled(e.target.checked)}
+                        />
                       </label>
                     </div>
                   </div>
 
                   {/* Reset */}
-                  <button className="w-full p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-medium">
+                  <button 
+                    onClick={() => {
+                      setTheme('dark');
+                      setLayoutMode('comfortable');
+                      setParallaxEnabled(true);
+                      setTransitionsEnabled(true);
+                      setLayout(generateLayout(AVAILABLE_WIDGETS));
+                    }}
+                    className="w-full p-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 text-sm font-medium"
+                  >
                     Reset All Settings
                   </button>
                 </div>
