@@ -1,8 +1,8 @@
 "use client";
 
-import { Plus, Settings, Image, GripHorizontal, X, Volume2, Maximize2 } from "lucide-react";
+import { Plus, Settings, Image, GripHorizontal, X, Volume2, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, Reorder, useDragControls, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Clock from "@/components/widgets/Clock";
 import Weather from "@/components/widgets/Weather";
 import Calendar from "@/components/widgets/Calendar";
@@ -225,6 +225,8 @@ export default function Home() {
   const [layoutMode, setLayoutMode] = useState('comfortable');
   const [parallaxEnabled, setParallaxEnabled] = useState(true);
   const [transitionsEnabled, setTransitionsEnabled] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0);
+  const itemsPerPage = 16; // Maximum rows per page
 
   // Autonomous smooth parallax effect
   const time = useMotionValue(0);
@@ -340,23 +342,44 @@ export default function Home() {
       // Determine target size based on drag direction
       let targetIndex = currentIndex;
 
-      if (isDraggingLeft && isDraggingUp) {
+      // Prioritize vertical resizing when dragging up/down
+      if (isDraggingUp) {
+        // Find next smaller height while maintaining width
+        targetIndex = availableSizes.findIndex(size => 
+          size.w === currentSize.w && size.h < currentSize.h
+        );
+      } else if (isDraggingDown) {
+        // Find next larger height while maintaining width
+        const nextSize = availableSizes.find(size => 
+          size.w === currentSize.w && size.h > currentSize.h
+        );
+        if (nextSize) {
+          targetIndex = availableSizes.indexOf(nextSize);
+        }
+      } else if (isDraggingLeft && isDraggingUp) {
         // Shrink both dimensions
         targetIndex = findClosestSize(currentSize.w - 4, currentSize.h - 4);
       } else if (isDraggingRight && isDraggingDown) {
         // Grow both dimensions
         const nextSize = availableSizes[currentIndex + 1];
         if (nextSize) targetIndex = currentIndex + 1;
-      } else if (isDraggingLeft || isDraggingUp) {
-        // Shrink to next smaller size
-        if (currentIndex > 0) targetIndex = currentIndex - 1;
-      } else if (isDraggingRight || isDraggingDown) {
-        // Grow to next larger size
-        if (currentIndex < availableSizes.length - 1) targetIndex = currentIndex + 1;
+      } else if (isDraggingLeft) {
+        // Shrink width only
+        targetIndex = availableSizes.findIndex(size => 
+          size.w < currentSize.w && size.h === currentSize.h
+        );
+      } else if (isDraggingRight) {
+        // Grow width only
+        const nextSize = availableSizes.find(size => 
+          size.w > currentSize.w && size.h === currentSize.h
+        );
+        if (nextSize) {
+          targetIndex = availableSizes.indexOf(nextSize);
+        }
       }
 
-      // Apply the size change if different
-      if (targetIndex !== currentIndex && targetIndex !== -1) {
+      // Apply the size change if different and valid
+      if (targetIndex !== -1 && targetIndex !== currentIndex) {
         cycleWidgetSize(widget, targetIndex);
         document.removeEventListener('pointermove', onPointerMove);
         document.removeEventListener('pointerup', onPointerUp);
@@ -419,6 +442,21 @@ export default function Home() {
     setIsPlaying(!isPlaying);
     setShowSoundMenu(false);
   };
+
+  // Filter layout items for current page
+  const paginatedLayout = useMemo(() => {
+    return layout.reduce((pages, item) => {
+      const pageIndex = Math.floor(item.y / itemsPerPage);
+      if (!pages[pageIndex]) pages[pageIndex] = [];
+      pages[pageIndex].push({
+        ...item,
+        y: item.y % itemsPerPage // Adjust y position for current page
+      });
+      return pages;
+    }, [] as Layout[][]);
+  }, [layout, itemsPerPage]);
+
+  const totalPages = paginatedLayout.length;
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black/20">
@@ -510,17 +548,40 @@ export default function Home() {
         <div className="pt-16 px-4 mx-auto max-w-[1260px]">
           <ReactGridLayout
             className="layout"
-            layout={layout}
+            layout={paginatedLayout[currentPage] || []}
             cols={16}
             rowHeight={75}
+            maxRows={16}
             margin={[8, 8]}
             containerPadding={[0, 0]}
-            onLayoutChange={setLayout}
+            onLayoutChange={(newLayout) => {
+              if (!newLayout.length) return;
+              
+              const updatedLayout = layout.map(item => {
+                const newItem = newLayout.find(l => l.i === item.i);
+                if (newItem && Math.floor(item.y / itemsPerPage) === currentPage) {
+                  return {
+                    ...item,
+                    ...newItem,
+                    y: newItem.y + (currentPage * itemsPerPage)
+                  };
+                }
+                return item;
+              });
+
+              // Only update if layout has actually changed
+              if (JSON.stringify(updatedLayout) !== JSON.stringify(layout)) {
+                setLayout(updatedLayout);
+              }
+            }}
             draggableHandle=".drag-handle"
             isBounded
             isResizable={false}
           >
-            {activeWidgets.map((widget) => {
+            {activeWidgets.filter(widget => {
+              const layoutItem = layout.find(l => l.i === widget.id);
+              return layoutItem && Math.floor(layoutItem.y / itemsPerPage) === currentPage;
+            }).map((widget) => {
               const WidgetComponent = widget.component;
               return (
                 <div key={widget.id} className="group">
@@ -581,6 +642,35 @@ export default function Home() {
               );
             })}
           </ReactGridLayout>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 flex items-center gap-4 p-2 rounded-full bg-black/50 backdrop-blur-xl border border-white/20">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                disabled={currentPage === 0}
+                className={`p-2 rounded-full ${currentPage === 0 ? 'text-white/30' : 'text-white hover:bg-white/10'}`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </motion.button>
+              
+              <span className="text-sm font-medium text-white">
+                {currentPage + 1} / {totalPages}
+              </span>
+
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                disabled={currentPage === totalPages - 1}
+                className={`p-2 rounded-full ${currentPage === totalPages - 1 ? 'text-white/30' : 'text-white hover:bg-white/10'}`}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </motion.button>
+            </div>
+          )}
         </div>
 
         {/* Background Image Selector */}
