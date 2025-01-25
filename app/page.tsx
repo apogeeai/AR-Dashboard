@@ -100,7 +100,7 @@ const AVAILABLE_WIDGETS: Widget[] = [
     name: 'Smart Home', 
     component: SmartHome, 
     defaultSize: { w: 4, h: 4 },
-    sizes: [{ w: 4, h: 4 }, { w: 8, h: 4 }]
+    sizes: [{ w: 4, h: 4 }, { w: 8, h: 4 }, { w: 4, h: 8 }, { w: 8, h: 8 }]
   },
   { 
     id: 'tasks', 
@@ -121,7 +121,7 @@ const AVAILABLE_WIDGETS: Widget[] = [
     name: 'Messages', 
     component: Messages, 
     defaultSize: { w: 4, h: 4 },
-    sizes: [{ w: 4, h: 4 }, { w: 8, h: 8 }]
+    sizes: [{ w: 4, h: 4 }, { w: 8, h: 4 }, { w: 8, h: 8 }]
   },
   { 
     id: 'ar-assistant', 
@@ -176,8 +176,8 @@ const AVAILABLE_WIDGETS: Widget[] = [
     id: 'ar-mood-tracker', 
     name: 'Mood Insights', 
     component: ARMoodTracker, 
-    defaultSize: { w: 4, h: 4 },
-    sizes: [{ w: 4, h: 4 }, { w: 8, h: 4 }]
+    defaultSize: { w: 4, h: 8 },
+    sizes: [{ w: 4, h: 8 }, { w: 8, h: 4 }]
   },
   { 
     id: 'ar-habit-garden', 
@@ -202,7 +202,27 @@ const SOUNDS = [
   },
   {
     name: "Forest",
-    url: "https://cdn.pixabay.com/download/audio/2021/08/09/audio_dc39bde808.mp3"
+    url: "/sounds/forest.mp3"
+  },
+  {
+    name: "Ocean",
+    url: "/sounds/ocean.mp3"
+  },
+  {
+    name: "Cafe",
+    url: "/sounds/cafe.mp3"
+  },
+  {
+    name: "Space",
+    url: "/sounds/space.mp3"
+  },
+  {
+    name: "Waterfall",
+    url: "/sounds/waterfall.mp3"
+  },
+  {
+    name: "White Noise",
+    url: "/sounds/white-noise.mp3"
   }
 ];
 
@@ -556,14 +576,14 @@ export default function Home() {
                   <X className="w-4 h-4 text-white/70" />
                 </motion.button>
               </div>
-              <div className="grid gap-2 h-[492px]">
-                {AVAILABLE_WIDGETS.slice(widgetPage * 12, (widgetPage + 1) * 12).map((widget) => (
+              <div className="grid gap-2">
+                {AVAILABLE_WIDGETS.slice(widgetPage * 9, (widgetPage + 1) * 9).map((widget) => (
                   <motion.button
                     key={widget.id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => addWidget(widget)}
-                    className="flex items-center gap-3 w-full p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
+                    className="flex items-center gap-3 w-full h-[49.55px] px-3 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
                   >
                     <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
                       <Plus className="w-4 h-4 text-white/70" />
@@ -572,7 +592,7 @@ export default function Home() {
                   </motion.button>
                 ))}
               </div>
-              {Math.ceil(AVAILABLE_WIDGETS.length / 12) > 1 && (
+              {Math.ceil(AVAILABLE_WIDGETS.length / 10) > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-4 pt-3 border-t border-white/10">
                   <motion.button
                     whileHover={{ scale: 1.1 }}
@@ -584,14 +604,14 @@ export default function Home() {
                     <ChevronLeft className="w-4 h-4" />
                   </motion.button>
                   <span className="text-sm font-medium text-white">
-                    {widgetPage + 1} / {Math.ceil(AVAILABLE_WIDGETS.length / 12)}
+                    {widgetPage + 1} / {Math.ceil(AVAILABLE_WIDGETS.length / 9)}
                   </span>
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => setWidgetPage(prev => Math.min(Math.ceil(AVAILABLE_WIDGETS.length / 12) - 1, prev + 1))}
-                    disabled={widgetPage === Math.ceil(AVAILABLE_WIDGETS.length / 12) - 1}
-                    className={`p-1.5 rounded-full ${widgetPage === Math.ceil(AVAILABLE_WIDGETS.length / 12) - 1 ? 'text-white/30' : 'text-white hover:bg-white/10'}`}
+                    onClick={() => setWidgetPage(prev => Math.min(Math.ceil(AVAILABLE_WIDGETS.length / 9) - 1, prev + 1))}
+                    disabled={widgetPage === Math.ceil(AVAILABLE_WIDGETS.length / 9) - 1}
+                    className={`p-1.5 rounded-full ${widgetPage === Math.ceil(AVAILABLE_WIDGETS.length / 9) - 1 ? 'text-white/30' : 'text-white hover:bg-white/10'}`}
                   >
                     <ChevronRight className="w-4 h-4" />
                   </motion.button>
@@ -640,15 +660,110 @@ export default function Home() {
                 return layoutItem && Math.floor(layoutItem.y / itemsPerPage) === currentPage;
               }).map((widget) => {
                 const WidgetComponent = widget.component;
+                // Special handling for Music widget
+                if (widget.id.startsWith('music')) {
+                  return (
+                    <div key={widget.id} className="group">
+                      <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl shadow-lg transition-all duration-300 
+                        hover:bg-white/10 cursor-pointer bg-white/5 text-white select-none overflow-hidden
+                        before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.18] before:to-transparent before:rounded-3xl before:pointer-events-none
+                        border-[1px] border-white/50 ${openSans.className}`}>
+                        <div className="relative z-10">
+                          <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
+                          <Music 
+                            currentSound={currentSound}
+                            isPlaying={isPlaying}
+                            onTogglePlay={() => {
+                              if (currentSound) {
+                                if (isPlaying) {
+                                  currentSound.pause();
+                                } else {
+                                  currentSound.play().catch(console.error);
+                                }
+                                setIsPlaying(!isPlaying);
+                              }
+                            }}
+                            onSeek={(time) => {
+                              if (currentSound) {
+                                currentSound.currentTime = time;
+                              }
+                            }}
+                            onPrevSound={() => {
+                              if (!currentSound) return;
+                              const currentIndex = SOUNDS.findIndex(s => currentSound.src.includes(s.url));
+                              if (currentIndex === -1) return;
+                              const prevIndex = (currentIndex - 1 + SOUNDS.length) % SOUNDS.length;
+                              const audio = new Audio(SOUNDS[prevIndex].url);
+                              audio.loop = true;
+                              audio.volume = currentSound.volume;
+                              currentSound.pause();
+                              audio.play().catch(console.error);
+                              setCurrentSound(audio);
+                              setIsPlaying(true);
+                            }}
+                            onNextSound={() => {
+                              if (!currentSound) return;
+                              const currentIndex = SOUNDS.findIndex(s => currentSound.src.includes(s.url));
+                              if (currentIndex === -1) return;
+                              const nextIndex = (currentIndex + 1) % SOUNDS.length;
+                              const audio = new Audio(SOUNDS[nextIndex].url);
+                              audio.loop = true;
+                              audio.volume = currentSound.volume;
+                              currentSound.pause();
+                              audio.play().catch(console.error);
+                              setCurrentSound(audio);
+                              setIsPlaying(true);
+                            }}
+                          />
+                        </div>
+                        {/* Drag handle */}
+                        <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full bg-black/20 backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
+                          <GripHorizontal className="w-4 h-4 text-white/70" />
+                        </div>
+
+                        {/* Delete button */}
+                        <motion.button
+                          className="absolute bottom-2 left-2 p-2 rounded-full bg-black/30 backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeWidget(widget.id);
+                          }}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          <X className="w-4 h-4 text-white/70" />
+                        </motion.button>
+
+                        {/* Resize handle */}
+                        <motion.div
+                          className="absolute bottom-2 right-2 p-2 rounded-full bg-black/30 backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-se-resize"
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            const targetWidget = activeWidgets.find(w => w.id === widget.id);
+                            if (!targetWidget) return;
+                            const startX = e.clientX;
+                            const startY = e.clientY;
+                            const currentSize = widget.sizes[widgetSizes[widget.id] || 0];
+                            handleResizeDrag(targetWidget, startX, startY, currentSize);
+                          }}
+                        >
+                          <Maximize2 className="w-4 h-4 text-white/70" />
+                        </motion.div>
+                      </div>
+                    </div>
+                  );
+                }
+                // Regular widget rendering
                 return (
                   <div key={widget.id} className="group">
-                    <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border border-white/10 shadow-lg transition-all duration-300 
+                    <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl shadow-lg transition-all duration-300 
                       hover:bg-white/10 cursor-pointer bg-white/5 text-white select-none overflow-hidden
-                      before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/[0.15] before:to-transparent before:rounded-3xl before:pointer-events-none
-                      after:absolute after:bottom-0 after:left-0 after:w-24 after:h-24 after:bg-gradient-radial after:from-white/20 after:to-transparent after:opacity-0 after:transition-opacity
-                      after:pointer-events-none group-hover:after:opacity-100 ${openSans.className}`}>
-                      {/* Shine effect */}
-                      <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity blur-xl pointer-events-none" />
+                      before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.18] before:to-transparent before:rounded-3xl before:pointer-events-none
+                      border-[1px] border-white/50 ${openSans.className}`}>
+                      <div className="relative z-10">
+                        <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
+                        <WidgetComponent />
+                      </div>
 
                       {/* Drag handle */}
                       <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full bg-black/20 backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
@@ -683,11 +798,6 @@ export default function Home() {
                       >
                         <Maximize2 className="w-4 h-4 text-white/70" />
                       </motion.div>
-
-                      <div>
-                        <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
-                        <WidgetComponent />
-                      </div>
                     </div>
                   </div>
                 );
@@ -704,7 +814,7 @@ export default function Home() {
               const WidgetComponent = widget.component;
               return (
                 <div key={widget.id} className="group">
-                  <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border border-white/10 shadow-lg transition-all duration-300 
+                  <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border-[1px] border-white/50 shadow-lg transition-all duration-300 
                     hover:bg-white/10 cursor-pointer bg-white/5 text-white select-none overflow-hidden
                     before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/[0.15] before:to-transparent before:rounded-3xl before:pointer-events-none
                     after:absolute after:bottom-0 after:left-0 after:w-24 after:h-24 after:bg-gradient-radial after:from-white/20 after:to-transparent after:opacity-0 after:transition-opacity
@@ -754,6 +864,12 @@ export default function Home() {
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </motion.button>
+
+                <div className="px-3 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
+                  <span className="text-sm font-medium text-white">
+                    {currentPage + 1} / {totalPages}
+                  </span>
+                </div>
                 
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -784,12 +900,7 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                if (!showSoundMenu) {
-                  toggleSound();
-                }
-                setShowSoundMenu(!showSoundMenu);
-              }}
+              onClick={() => setShowSoundMenu(!showSoundMenu)}
               className={`p-3 rounded-full backdrop-blur-xl transition-all border border-white/20 shadow-lg
                         ${isPlaying ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}
             >
@@ -871,41 +982,40 @@ export default function Home() {
                 </motion.button>
               </div>
               <div className="grid gap-2 w-48">
-                {SOUNDS.map((sound, index) => (
-                  <motion.button
-                    key={index}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      if (currentSound) {
-                        currentSound.pause();
-                        if (currentSound.src === sound.url) {
-                          setIsPlaying(false);
-                          return;
+                {SOUNDS.map((sound, index) => {
+                  const isCurrentSound = currentSound?.src.includes(sound.url);
+                  return (
+                    <motion.button
+                      key={index}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => {
+                        if (currentSound) {
+                          currentSound.pause();
+                          if (currentSound.src === sound.url && isPlaying) {
+                            setIsPlaying(false);
+                            return;
+                          }
                         }
-                      }
-                      const audio = new Audio(sound.url);
-                      audio.loop = true;
-                      audio.volume = 0.5;
-                      audio.play().catch(console.error);
-                      setCurrentSound(audio);
-                      setIsPlaying(true);
-                    }}
-                    className={`flex items-center gap-3 w-full p-2 rounded-lg 
-                              transition-all ${
-                                isPlaying && currentSound?.src === sound.url
-                                  ? 'bg-white/20'
-                                  : 'bg-white/5 hover:bg-white/10'
-                              }`}
-                  >
-                    <Volume2 className={`w-4 h-4 ${
-                      isPlaying && currentSound?.src === sound.url
-                        ? 'text-white'
-                        : 'text-white/70'
-                    }`} />
-                    <span className="text-white/90 text-sm">{sound.name}</span>
-                  </motion.button>
-                ))}
+                        const audio = new Audio(sound.url);
+                        audio.loop = true;
+                        audio.volume = 0.5;
+                        audio.play().catch(console.error);
+                        setCurrentSound(audio);
+                        setIsPlaying(true);
+                      }}
+                      className={`flex items-center gap-3 w-full p-2 rounded-lg 
+                                transition-all ${
+                                  isCurrentSound && isPlaying
+                                    ? 'bg-white/30 text-white'
+                                    : 'bg-white/5 hover:bg-white/10 text-white/70'
+                                }`}
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span className="text-sm">{sound.name}</span>
+                    </motion.button>
+                  );
+                })}
               </div>
             </motion.div>
           )}

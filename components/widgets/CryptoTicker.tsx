@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 
 export default function CryptoTicker() {
   const cryptos = [
-    { name: "BTC", price: "43,521.23", change: "+2.4%" },
-    { name: "ETH", price: "2,853.12", change: "+1.8%" },
-    { name: "SOL", price: "98.45", change: "+5.2%" },
+    { name: "BTC", price: "103,521.23", change: "+2.4%" },
+    { name: "ETH", price: "21,853.12", change: "+1.8%" },
+    { name: "SOL", price: "208.45", change: "+5.2%" },
   ];
 
   return (
