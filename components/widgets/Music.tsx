@@ -9,9 +9,6 @@ export default function Music() {
       title: "Ambient Flow",
        duration: "5:32"
     },
-  
- 
-
 
   ];
 

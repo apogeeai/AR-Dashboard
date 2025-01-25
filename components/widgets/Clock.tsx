@@ -35,12 +35,12 @@ export default function Clock() {
     <div className="h-full w-full flex flex-col items-center justify-center">
       <div className="text-center">
         <div className="flex items-baseline">
-          <span className="text-6xl font-bold tracking-tight">{hours}</span>
-          <span className="text-6xl font-bold tracking-tight">:</span>
-          <span className="text-6xl font-bold tracking-tight">{minutes}</span>
-          <span className="text-xl font-medium ml-2 text-white/70">{ampm}</span>
+          <span className="text-7xl font-bold tracking-tight">{hours}</span>
+          <span className="text-7xl font-bold tracking-tight">:</span>
+          <span className="text-7xl font-bold tracking-tight">{minutes}</span>
+          <span className="text-3xl font-medium ml-2 text-white/70">{ampm}</span>
         </div>
-        <div className="text-sm font-medium text-white/50 mt-1">
+        <div className="text-md font-medium text-white/50 mt-1">
           {time.toLocaleDateString(undefined, { 
             weekday: 'long', 
             month: 'long', 

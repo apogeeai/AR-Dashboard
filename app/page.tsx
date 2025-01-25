@@ -546,38 +546,93 @@ export default function Home() {
 
         {/* Bento Grid Layout */}
         <div className="pt-16 px-4 mx-auto max-w-[1260px]">
-          <ReactGridLayout
-            className="layout"
-            layout={paginatedLayout[currentPage] || []}
-            cols={16}
-            rowHeight={75}
-            maxRows={16}
-            margin={[8, 8]}
-            containerPadding={[0, 0]}
-            onLayoutChange={(newLayout) => {
-              if (!newLayout.length) return;
-              
-              const updatedLayout = layout.map(item => {
-                const newItem = newLayout.find(l => l.i === item.i);
-                if (newItem && Math.floor(item.y / itemsPerPage) === currentPage) {
-                  return {
-                    ...item,
-                    ...newItem,
-                    y: newItem.y + (currentPage * itemsPerPage)
-                  };
-                }
-                return item;
-              });
+          <div className="hidden md:block"> {/* Desktop Layout */}
+            <ReactGridLayout
+              className="layout"
+              layout={paginatedLayout[currentPage] || []}
+              cols={16}
+              rowHeight={75}
+              maxRows={16}
+              margin={[8, 8]}
+              containerPadding={[0, 0]}
+              onLayoutChange={(newLayout) => {
+                if (!newLayout.length) return;
+                
+                const updatedLayout = layout.map(item => {
+                  const newItem = newLayout.find(l => l.i === item.i);
+                  if (newItem && Math.floor(item.y / itemsPerPage) === currentPage) {
+                    return {
+                      ...item,
+                      ...newItem,
+                      y: newItem.y + (currentPage * itemsPerPage)
+                    };
+                  }
+                  return item;
+                });
 
-              // Only update if layout has actually changed
-              if (JSON.stringify(updatedLayout) !== JSON.stringify(layout)) {
-                setLayout(updatedLayout);
-              }
-            }}
-            draggableHandle=".drag-handle"
-            isBounded
-            isResizable={false}
-          >
+                if (JSON.stringify(updatedLayout) !== JSON.stringify(layout)) {
+                  setLayout(updatedLayout);
+                }
+              }}
+              draggableHandle=".drag-handle"
+              isBounded
+              isResizable={false}
+            >
+              {activeWidgets.filter(widget => {
+                const layoutItem = layout.find(l => l.i === widget.id);
+                return layoutItem && Math.floor(layoutItem.y / itemsPerPage) === currentPage;
+              }).map((widget) => {
+                const WidgetComponent = widget.component;
+                return (
+                  <div key={widget.id} className="group">
+                    <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/5 cursor-pointer bg-white/10 text-white select-none ${openSans.className}`}>
+                      {/* Drag handle */}
+                      <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full bg-black/20 backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
+                        <GripHorizontal className="w-4 h-4 text-white/70" />
+                      </div>
+
+                      {/* Delete button */}
+                      <motion.button
+                        className="absolute bottom-2 left-2 p-2 rounded-full bg-black/30 backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeWidget(widget.id);
+                        }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <X className="w-4 h-4 text-white/70" />
+                      </motion.button>
+
+                      {/* Resize handle */}
+                      <motion.div
+                        className="absolute bottom-2 right-2 p-2 rounded-full bg-black/30 backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-se-resize"
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          const targetWidget = activeWidgets.find(w => w.id === widget.id);
+                          if (!targetWidget) return;
+                          const startX = e.clientX;
+                          const startY = e.clientY;
+                          const currentSize = widget.sizes[widgetSizes[widget.id] || 0];
+                          handleResizeDrag(targetWidget, startX, startY, currentSize);
+                        }}
+                      >
+                        <Maximize2 className="w-4 h-4 text-white/70" />
+                      </motion.div>
+
+                      <div>
+                        <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
+                        <WidgetComponent />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </ReactGridLayout>
+          </div>
+
+          {/* Mobile Layout */}
+          <div className="md:hidden space-y-4">
             {activeWidgets.filter(widget => {
               const layoutItem = layout.find(l => l.i === widget.id);
               return layoutItem && Math.floor(layoutItem.y / itemsPerPage) === currentPage;
@@ -585,24 +640,10 @@ export default function Home() {
               const WidgetComponent = widget.component;
               return (
                 <div key={widget.id} className="group">
-                  <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl
-                               border border-white/20 shadow-lg transition-all duration-300
-                               hover:bg-white/5 cursor-pointer bg-white/10 text-white select-none ${openSans.className}`}>
-                    {/* Drag handle */}
-                    <div className="drag-handle absolute top-2 right-2 p-1.5 rounded-full 
-                                  bg-black/20 backdrop-blur-sm z-10 opacity-0 
-                                  group-hover:opacity-100 transition-opacity cursor-move">
-                      <GripHorizontal className="w-4 h-4 text-white/70" />
-                    </div>
-
-                    {/* Size indicator */}
-                  
-
+                  <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border border-white/20 shadow-lg transition-all duration-300 hover:bg-white/5 cursor-pointer bg-white/10 text-white select-none ${openSans.className}`}>
                     {/* Delete button */}
                     <motion.button
-                      className="absolute bottom-2 left-2 p-2 rounded-full 
-                                bg-black/30 backdrop-blur-sm z-10 opacity-0 
-                                group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 p-2 rounded-full bg-black/30 backdrop-blur-sm z-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeWidget(widget.id);
@@ -613,26 +654,6 @@ export default function Home() {
                       <X className="w-4 h-4 text-white/70" />
                     </motion.button>
 
-                    {/* Resize handle */}
-                    <motion.div
-                      className="absolute bottom-2 right-2 p-2 rounded-full 
-                                bg-black/30 backdrop-blur-sm z-10 opacity-0 
-                                group-hover:opacity-100 transition-opacity cursor-se-resize"
-                      onPointerDown={(e) => {
-                        e.preventDefault(); // Prevent text selection
-                        const targetWidget = activeWidgets.find(w => w.id === widget.id);
-                        if (!targetWidget) return;
-
-                        const startX = e.clientX;
-                        const startY = e.clientY;
-                        const currentSize = widget.sizes[widgetSizes[widget.id] || 0];
-                        
-                        handleResizeDrag(targetWidget, startX, startY, currentSize);
-                      }}
-                    >
-                      <Maximize2 className="w-4 h-4 text-white/70" />
-                    </motion.div>
-
                     <div>
                       <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
                       <WidgetComponent />
@@ -641,7 +662,7 @@ export default function Home() {
                 </div>
               );
             })}
-          </ReactGridLayout>
+          </div>
 
           {/* Pagination Controls */}
           {totalPages > 1 && (

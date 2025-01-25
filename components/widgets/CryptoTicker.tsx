@@ -16,8 +16,7 @@ export default function CryptoTicker() {
       className="  "
     >
       <div className="flex items-center mb-4">
-        <Bitcoin className="w-6 h-6 mr-2" />
-        <h3 className="text-xl font-semibold">Crypto</h3>
+    
       </div>
       <div className="space-y-3">
         {cryptos.map((crypto, index) => (
