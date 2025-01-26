@@ -1,6 +1,47 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { Clock as ClockIcon } from 'lucide-react';
+
+interface WorldClock {
+  city: string;
+  timezone: string;
+  offset: number;
+}
+
+const WORLD_CLOCKS: WorldClock[] = [
+  { city: "London", timezone: "GMT", offset: 0 },
+  { city: "Tokyo", timezone: "JST", offset: 9 },
+  { city: "New York", timezone: "EST", offset: -5 }
+];
+
+function WorldTimeDisplay({ date, city, timezone }: { date: Date, city: string, timezone: string }) {
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const formattedHours = hours % 12 || 12;
+  const formattedMinutes = minutes.toString().padStart(2, '0');
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="w-24 text-center">
+        {/* City name */}
+        <div className="text-[11px] font-medium text-white/70 mb-1">{city}</div>
+        
+        {/* Time display */}
+        <div className="flex items-baseline justify-center gap-0.5">
+          <span className="text-2xl font-bold tracking-tight">{formattedHours}</span>
+          <span className="text-2xl font-bold tracking-tight">:</span>
+          <span className="text-2xl font-bold tracking-tight">{formattedMinutes}</span>
+          <span className="text-sm font-medium ml-1 text-white/70">{ampm}</span>
+        </div>
+        
+        {/* Timezone */}
+        <div className="text-[10px] font-medium text-white/40 mt-1">{timezone}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function Clock() {
   const [mounted, setMounted] = useState(false);
@@ -48,6 +89,9 @@ export default function Clock() {
           })}
         </div>
       </div>
+
+   
+   
     </div>
   );
 }

@@ -17,7 +17,7 @@ export default function TwitterTrends() {
 
   return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
+ 
       className="  "
     >
       <div className="flex items-center mb-4">

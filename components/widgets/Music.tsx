@@ -52,7 +52,13 @@ export default function Music({ currentSound, isPlaying, onTogglePlay, onSeek, o
     if (!currentSound) return 'No sound selected';
     const url = currentSound.src;
     const match = url.match(/\/sounds\/(.+)\.mp3$/);
-    return match ? match[1].charAt(0).toUpperCase() + match[1].slice(1) : 'Unknown';
+    if (!match) return 'Unknown';
+    
+    // Special handling for Café
+    if (match[1] === 'cafe') return 'Café';
+    
+    // Default case: capitalize first letter
+    return match[1].charAt(0).toUpperCase() + match[1].slice(1);
   };
 
   const formatTime = (time: number) => {

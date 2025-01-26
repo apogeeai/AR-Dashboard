@@ -24,6 +24,7 @@ import ARMemoryJournal from "@/components/widgets/ARMemoryJournal";
 import ARMoodTracker from "@/components/widgets/ARMoodTracker";
 import ARHabitGarden from "@/components/widgets/ARHabitGarden";
 import ARDreamAnalyzer from "@/components/widgets/ARDreamAnalyzer";
+import BioMarkers from "@/components/widgets/BioMarkers";
 import { Layout } from 'react-grid-layout';
 import RGL, { WidthProvider } from "react-grid-layout";
 import 'react-grid-layout/css/styles.css';
@@ -192,7 +193,14 @@ const AVAILABLE_WIDGETS: Widget[] = [
     component: ARDreamAnalyzer, 
     defaultSize: { w: 4, h: 8 },
     sizes: [{ w: 4, h: 8 }, { w: 8, h: 8 }]
-  }
+  },
+  { 
+    id: 'biomarkers', 
+    name: 'BioMarkers', 
+    component: BioMarkers, 
+    defaultSize: { w: 4, h: 8 },
+    sizes: [{ w: 8, h: 8 }, { w: 12, h: 8 }, { w: 16, h: 8 }]
+  },
 ];
 
 const SOUNDS = [
@@ -204,12 +212,9 @@ const SOUNDS = [
     name: "Forest",
     url: "/sounds/forest.mp3"
   },
+
   {
-    name: "Ocean",
-    url: "/sounds/ocean.mp3"
-  },
-  {
-    name: "Cafe",
+    name: "Café",
     url: "/sounds/cafe.mp3"
   },
   {
@@ -262,7 +267,7 @@ const generateLayout = (widgets: Widget[]): Layout[] => {
 };
 
 export default function Home() {
-  const [bgImage, setBgImage] = useState("https://w.wallhaven.cc/full/2y/wallhaven-2y7q2y.png");
+  const [bgImage, setBgImage] = useState("/images/wallhaven-exk17r.jpg");
   const [activeWidgets, setActiveWidgets] = useState<Widget[]>(AVAILABLE_WIDGETS);
   const [layout, setLayout] = useState<Layout[]>(() => generateLayout(AVAILABLE_WIDGETS));
   const [bgImages, setBgImages] = useState<string[]>([]);
@@ -563,7 +568,7 @@ export default function Home() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="absolute top-16 right-4 w-64 p-4 rounded-lg bg-black/50 backdrop-blur-xl border border-white/20 shadow-lg z-50"
+              className="absolute top-16 right-4 w-64 p-4 rounded-lg bg-black/50 backdrop-blur-xl border-[1px] border-white/30 shadow-lg z-50"
             >
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-white/90 text-sm font-medium">Add Widget</h3>
@@ -664,10 +669,11 @@ export default function Home() {
                 if (widget.id.startsWith('music')) {
                   return (
                     <div key={widget.id} className="group">
-                      <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl shadow-lg transition-all duration-300 
+                      <motion.div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl shadow-lg transition-all duration-300 
                         hover:bg-white/10 cursor-pointer bg-white/5 text-white select-none overflow-hidden
                         before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.18] before:to-transparent before:rounded-3xl before:pointer-events-none
-                        border-[1px] border-white/50 ${openSans.className}`}>
+                        border-[1px] border-white/30 ${openSans.className}`}
+                        whileHover={{ scale: 1.02 }}>
                         <div className="relative z-10">
                           <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
                           <Music 
@@ -749,17 +755,18 @@ export default function Home() {
                         >
                           <Maximize2 className="w-4 h-4 text-white/70" />
                         </motion.div>
-                      </div>
+                      </motion.div>
                     </div>
                   );
                 }
                 // Regular widget rendering
                 return (
                   <div key={widget.id} className="group">
-                    <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl shadow-lg transition-all duration-300 
+                    <motion.div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl shadow-lg transition-all duration-300 
                       hover:bg-white/10 cursor-pointer bg-white/5 text-white select-none overflow-hidden
                       before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.18] before:to-transparent before:rounded-3xl before:pointer-events-none
-                      border-[1px] border-white/50 ${openSans.className}`}>
+                      border-[1px] border-white/30 ${openSans.className}`}
+                      whileHover={{ scale: 1.02 }}>
                       <div className="relative z-10">
                         <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
                         <WidgetComponent />
@@ -798,7 +805,7 @@ export default function Home() {
                       >
                         <Maximize2 className="w-4 h-4 text-white/70" />
                       </motion.div>
-                    </div>
+                    </motion.div>
                   </div>
                 );
               })}
@@ -814,11 +821,12 @@ export default function Home() {
               const WidgetComponent = widget.component;
               return (
                 <div key={widget.id} className="group">
-                  <div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border-[1px] border-white/50 shadow-lg transition-all duration-300 
+                  <motion.div className={`relative h-full p-6 rounded-3xl backdrop-blur-xl border-[1px] border-white/30 shadow-lg transition-all duration-300 
                     hover:bg-white/10 cursor-pointer bg-white/5 text-white select-none overflow-hidden
                     before:absolute before:inset-0 before:bg-gradient-to-tr before:from-white/[0.15] before:to-transparent before:rounded-3xl before:pointer-events-none
                     after:absolute after:bottom-0 after:left-0 after:w-24 after:h-24 after:bg-gradient-radial after:from-white/20 after:to-transparent after:opacity-0 after:transition-opacity
-                    after:pointer-events-none group-hover:after:opacity-100 ${openSans.className}`}>
+                    after:pointer-events-none group-hover:after:opacity-100 ${openSans.className}`}
+                    whileHover={{ scale: 1.02 }}>
                     {/* Shine effect */}
                     <div className="absolute -inset-1 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity blur-xl pointer-events-none" />
 
@@ -839,7 +847,7 @@ export default function Home() {
                       <h3 className={`text-lg font-semibold ${raleway.className}`}>{widget.name}</h3>
                       <WidgetComponent />
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
               );
             })}
@@ -858,14 +866,14 @@ export default function Home() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
                   disabled={currentPage === 0}
-                  className={`p-3 rounded-full backdrop-blur-xl border border-white/20 shadow-lg ${
+                  className={`p-3 rounded-full backdrop-blur-xl border-[1px] border-white/30 shadow-lg ${
                     currentPage === 0 ? 'bg-white/5 text-white/30' : 'bg-white/10 hover:bg-white/20 text-white'
                   }`}
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </motion.button>
 
-                <div className="px-3 py-2 rounded-full bg-white/10 backdrop-blur-xl border border-white/20">
+                <div className="px-3 py-2 rounded-full bg-white/10 backdrop-blur-xl border-[1px] border-white/30">
                   <span className="text-sm font-medium text-white">
                     {currentPage + 1} / {totalPages}
                   </span>
@@ -876,7 +884,7 @@ export default function Home() {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
                   disabled={currentPage === totalPages - 1}
-                  className={`p-3 rounded-full backdrop-blur-xl border border-white/20 shadow-lg ${
+                  className={`p-3 rounded-full backdrop-blur-xl border-[1px] border-white/30 shadow-lg ${
                     currentPage === totalPages - 1 ? 'bg-white/5 text-white/30' : 'bg-white/10 hover:bg-white/20 text-white'
                   }`}
                 >
@@ -891,7 +899,7 @@ export default function Home() {
               whileTap={{ scale: 0.95 }}
               transition={{ delay: 1.2 }}
               onClick={() => setShowBgSelector(!showBgSelector)}
-              className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border border-white/20 shadow-lg"
+              className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border-[1px] border-white/30 shadow-lg"
             >
               <Image className="w-6 h-6 text-white" />
             </motion.button>
@@ -901,7 +909,7 @@ export default function Home() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowSoundMenu(!showSoundMenu)}
-              className={`p-3 rounded-full backdrop-blur-xl transition-all border border-white/20 shadow-lg
+              className={`p-3 rounded-full backdrop-blur-xl transition-all border-[1px] border-white/30 shadow-lg
                         ${isPlaying ? 'bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}
             >
               <Volume2 className="w-6 h-6 text-white" />
@@ -913,7 +921,7 @@ export default function Home() {
               whileTap={{ scale: 0.95 }}
               transition={{ delay: 1.2 }}
               onClick={() => setShowSettingsModal(true)}
-              className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border border-white/20 shadow-lg"
+              className="p-3 rounded-full bg-white/10 backdrop-blur-xl hover:bg-white/20 transition-all border-[1px] border-white/30 shadow-lg"
             >
               <Settings className="w-6 h-6 text-white" />
             </motion.button>
@@ -927,7 +935,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-20 right-4 p-4 rounded-lg bg-black/50 backdrop-blur-xl border border-white/20 shadow-lg"
+              className="fixed bottom-20 right-4 p-4 rounded-lg bg-black/50 backdrop-blur-xl border-[1px] border-white/30 shadow-lg"
             >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-white/90 text-sm font-medium">Choose Background</h3>
@@ -968,7 +976,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className="fixed bottom-20 right-4 p-4 rounded-lg bg-black/50 backdrop-blur-xl border border-white/20 shadow-lg"
+              className="fixed bottom-20 right-4 p-4 rounded-lg bg-black/50 backdrop-blur-xl border-[1px] border-white/30 shadow-lg"
             >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-white/90 text-sm font-medium">Ambient Sounds</h3>
@@ -1036,7 +1044,7 @@ export default function Home() {
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.95 }}
                 onClick={(e) => e.stopPropagation()}
-                className="w-[400px] bg-black/50 backdrop-blur-xl p-6 rounded-2xl border border-white/20 shadow-lg"
+                className="w-[400px] bg-black/50 backdrop-blur-xl p-6 rounded-2xl border-[1px] border-white/30 shadow-lg"
               >
                 <div className="flex justify-between items-center mb-6">
                   <h2 className={`text-xl font-semibold text-white ${raleway.className}`}>Settings</h2>
